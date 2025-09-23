@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Metallic Crystal Structures — ASCII Art</title>
+  <style>
+    body {
+      background-color: #6692a8;
+      color: #ffffff;
+      font-family: monospace;
+      padding: 2rem;
+      line-height: 1.4;
+    }
+    pre {
+      background-color: #111;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre;
+      font-size: 14px;
+    }
+    h1, h2 {
+      color: #ffd700;
+    }
+    p {
+      max-width: 700px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Metallic Crystal Structures — Text-Based Visualizations</h1>
+  <p>
+    This webpage displays 3D ASCII art illustrations of common metallic crystal structures:
+    Simple Cubic (SC), Body-Centered Cubic (BCC), and Face-Centered Cubic (FCC).
+    All visualizations are made using only HTML and formatted text, mimicking traditional ball-and-stick models in a minimalist style.
+  </p>
+
+  <h2>Simple Cubic (SC)</h2>
+  <pre>
+       o-----------o
+      /           /|
+     /           / |
+    o-----------o  |
+    |           |  |
+    |           |  |
+    |           |  o
+    |           | /
+    |           |/
+    o-----------o
+  </pre>
+  <p>
+    The simple cubic structure consists of atoms at each of the 8 corners of the cube.
+    Each corner atom is shared among 8 neighboring unit cells. This structure is rare in metals due to its low packing efficiency.
+  </p>
+
+  <h2>Body-Centered Cubic (BCC)</h2>
+  <pre>
+       o-----------o
+      /           /|
+     /     o     / |
+    o-----------o  |
+    |           |  |
+    |           | o |
+    |     o     |  o
+    |           | /
+    |           |/
+    o-----------o
+  </pre>
+  <p>
+    The BCC structure has 8 corner atoms and 1 atom at the center of the cube.
+    It has a coordination number of 8 and a packing efficiency of about 68%. Common in iron, chromium, and tungsten.
+  </p>
+
+  <h2>Face-Centered Cubic (FCC)</h2>
+  <pre>
+       o------o
+      /|     /|
+     o·o----o·|
+     |·|    |o|
+     |o·----o·o
+     |/     |/
+     o------o
+  </pre>
+  <p>
+    The FCC structure contains atoms at each corner and in the center of each face.
+    This gives it a coordination number of 12 and the highest packing efficiency (~74%) among cubic lattices. Found in aluminum, copper, and gold.
+  </p>
+
+</body>
+</html>
