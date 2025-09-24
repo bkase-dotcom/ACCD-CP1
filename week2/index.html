@@ -26,21 +26,38 @@
             border-bottom: 2px solid black;
             padding-bottom: 8px;
         }
-
+        .active {
+            font-weight: bold;
+        }
+        nav ul li:last-child{
+            border-bottom: none;
+        }
         nav ul a{
             text-decoration: none;
             color: black;
             text-transform: uppercase;
         }
+        @media(min-width: 768px) {
+            nav ul {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+            }
+            nav ul li {
+                border-bottom: none;
+                margin: 10px;
+            }
+        }
+
     </style>
 </head>
 <body>
     <header>
         <nav>
             <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Work</a></li>
-                <li><a href="#">Blog</a></li>
+                <li><a href="#somelinkhere">Home</a></li>
+                <li class="active"><a href="#somelinkhere">Work</a></li>
+                <li><a href="#somelinkhere">Blog</a></li>
             </ul>
         </nav>
     </header>
