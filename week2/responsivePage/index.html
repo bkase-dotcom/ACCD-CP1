@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self Stock</title>
+
+  <style>
+    /* -------------------------------
+       GLOBAL STYLES & VARIABLES
+    --------------------------------*/
+    :root {
+      --bg: #f7fafc;
+      --text: #2d3748;
+      --muted: #4a5568;
+      --accent: #3182ce;
+      --radiusButton: 24px;
+      --radiusCard: 12px;
+      --gap: 1rem;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      background: #f7f7f7;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+
+    footer, main, section, nav {
+      padding: 1rem;
+    }
+
+    .wrap {
+      width: min(100%, 1100px);
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      flex: 1;
+    }
+
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 28px;      /* overall width of the icon */
+      height: 24px;     /* overall height of the icon */
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .hamburger span {
+      display: block;
+      height: 4px;              /* thickness of each bar */
+      width: 100%;              /* match the button width */
+      background: #ffffff;         /* bar color */
+      border-radius: 2px;       /* rounded corners */
+    }
+
+    /* -------------------------------
+       HEADER
+    --------------------------------*/
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #487c76;
+      flex-wrap: wrap;
+      gap: var(--gap);
+      border-bottom: 1px solid #e2e8f0;
+      border-radius: var(--radiusCard);
+      padding: 0.75rem;
+    }
+
+    header h1 {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .logo img {
+      height: 40px;
+      width: auto;
+      border-radius: var(--radiusCard);
+    }
+
+    .nav {
+        display: none;                /* hidden by default */
+        flex-direction: column;       /* vertical list */
+        background: white;
+        position: absolute;
+        top: 70px;                    /* just below header */
+        right: 1rem;
+        border: 1px solid #ddd;
+        border-radius: var(--radiusCard);
+        padding: 1rem;
+    }
+
+    .nav.open {
+        display: flex;                /* shown when toggled */
+    }
+   
+    .nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: .75rem;
+      flex: 1;
+      justify-content: space-evenly;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      padding: .4rem .8rem;
+      border-radius: var(--radiusButton);
+      transition: background .2s;
+    }
+
+    .nav a:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .cta {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: .6rem 1rem;
+      border-radius: var(--radiusButton);
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* -------------------------------
+       HERO
+    --------------------------------*/
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      padding: 1.5rem;
+      background: white;
+      border-radius: var(--radiusCard);
+    }
+
+    .hero-text {
+        flex: 1;
+        justify-content: center;
+        align-content: center;
+    }
+
+    .hero-media {
+        flex: 1;
+        flex-direction: column;
+        display: flex;
+        justify-content: left;
+    }
+
+    .hero-media img {
+        max-width: 100%
+        height: auto;
+
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+      padding: 4px;
+    }
+
+    .btn {
+      text-decoration: none;
+      border: 1px solid var(--accent);
+      border-radius: var(--radiusButton);
+      padding: .6rem 1rem;
+      font-weight: bold;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn.secondary {
+      color: var(--accent);
+      background: white;
+    }
+
+    /* -------------------------------
+       FEATURES
+    --------------------------------*/
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--radiusCard);
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    /* -------------------------------
+       FOOTER
+    --------------------------------*/
+    footer {
+      text-align: center;
+      font-size: .9rem;
+      color: var(--muted);
+      padding: 1rem 0;
+      border-top: 1px solid #e2e8f0;
+    }
+
+
+    /* -------------------------------
+       MEDIA QUERIES
+    --------------------------------*/
+    @media (min-width: 768px) and (max-width: 1100px) {
+        body {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .hero {
+            flex-direction: row;
+        }
+        :root {
+            --accent: #ce3131;
+            --radiusButton: 2px;
+            --radiusCard: 2px;
+        }
+        header {
+            background-color: #ce3131;
+            justify-content: flex-start;
+        }
+
+        .hamburger {
+          display: none;
+        }
+        .nav {
+          display: flex !important;
+          position: static;
+          flex-direction: 1;
+          background: none;
+          border: none;
+          padding: 0;
+        }
+        .nav ul {
+          display: flex;
+          gap: .75rem;
+        }
+        .nav li {
+          list-style: none;
+        }
+    }
+
+    @media (min-width: 1100px) {
+        header {
+            justify-content: flex-start;
+        }
+        .hero {
+            flex-direction: row;
+        }
+
+        /* At 1100px and above → two columns */
+        .features {
+            flex-direction: row;   /* place side by side */
+            flex-wrap: wrap;       /* allow wrapping if needed */
+        }
+    
+        .card {
+            flex: 1 1 calc(50% - 1rem); /* two columns */
+            box-sizing: border-box;     /* prevents overflow */
+        }
+        .hamburger {
+          display: none;
+        }
+        .nav {
+          display: flex !important;
+          position: static;
+          flex-direction: 1;
+          background: none;
+          border: none;
+          padding: 0;
+          justify-content: center;
+          flex: 1;
+        }
+        .nav ul {
+          display: flex;
+          justify-content: space-evenly;
+          flex: 1;
+          gap: .75rem;
+        }
+        .nav ul li {
+          list-style: none;
+          justify-content: space-evenly;
+          flex: 1;
+        }
+
+    }
+
+
+
+
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">
+        <img src="media/logoMobile.png" alt="Self Stock Logo">
+        <h1>Self Stock</h1>
+      </div>
+      <button class="hamburger" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+      </button>
+      <nav class="nav">
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#benefits">Benefits</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="overview">
+      <div class="hero-text">
+        <h1>Automate Your Inventory with AI</h1>
+        <p>Track stock levels, update counts, and manage inventory in real-time using cutting-edge computer vision technology.</p>
+        <div class="actions">
+          <a href="#features" class="btn primary">Request a Demo</a>
+          <a href="#benefits" class="btn secondary">See Features</a>
+        </div>
+      </div>
+      <div class="hero-media">
+        <img src="media/heroImage.png" alt="Illustration" style="max-width:100%;">
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+      <article class="card">
+        <h3>Real-Time Tracking</h3>
+        <p>Automatically detect stock levels with AI-powered cameras.</p>
+      </article>
+      <article class="card">
+        <h3>Smart Restocking</h3>
+        <p>Get alerts before items run low to avoid costly shortages.</p>
+      </article>
+      <article class="card">
+        <h3>Employee Dashboard</h3>
+        <p>Streamline daily tasks with a clear, responsive interface.</p>
+      </article>
+      <article class="card">
+        <h3>Seamless Integration</h3>
+        <p>Connect with existing POS and warehouse systems.</p>
+      </article>
+    </section>
+
+    <!-- BENEFITS -->
+    <section id="benefits" class="card">
+      <h3>Why Choose Self Stock?</h3>
+      <ul>
+        <li>Cut inventory errors by 40%</li>
+        <li>Reduce wasted employee hours</li>
+        <li>Optimize shelf space for maximum efficiency</li>
+      </ul>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="card">
+      <h3>Contact Us</h3>
+      <p>Ready to transform your inventory process?</p>
+      <p>Email: hello@selfstock.com</p>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      © 2025 Self Stock. All rights reserved.
+    </footer>
+
+  </div>
+</body>
+</html>
