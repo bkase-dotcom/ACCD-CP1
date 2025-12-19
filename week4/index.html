@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Low-Poly Plant – Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Low-Poly Plant – Project Documentation</h1>
+      <p class="subtitle">Blender study of a fiddle leaf fig</p>
+    </div>
+  </header>
+
+  <main>
+    <section id="background">
+      <h2>Background</h2>
+      <p>
+        My previous 3D experience has mostly been in Autodesk Fusion, using parametric,
+        engineering-oriented modeling. Most recently I used Fusion to develop hardware
+        for a portable weighted piano keyboard. Blender, by contrast, is built around
+        polygon mesh modeling and is better suited for artistic work. Starting this
+        project required me to shift away from a parametric mindset and get comfortable
+        with Blender’s less rigid but more expressive mesh workflow. After the initial
+        learning curve, I came to appreciate the extra freedom Blender provides.
+      </p>
+    </section>
+
+    <section id="inspiration">
+      <h2>Inspiration</h2>
+      <p>
+        For the subject of the project I looked at plants in my living space. I began
+        by trying to model a money tree, but eventually pivoted to a fiddle leaf fig.
+        The fiddle leaf has a simpler main stem and larger leaves, which made it more
+        manageable for a low-poly study. I kept the original pot from the money tree
+        attempt since it was easier to model and I preferred its texture. Working from
+        a single reference photo is limiting for high-fidelity modeling, but it works
+        well for low-poly forms.
+      </p>
+
+      <div class="figure">
+        <figure>
+          <img src="media/inspiration_1.jpeg" alt="Reference photo of the fiddle leaf fig plant">
+          <figcaption>Reference fiddle leaf fig.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/inspiration_2.jpeg" alt="Reference photo of the money tree plant">
+          <figcaption>Initial money tree reference.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="process">
+      <h2>Process</h2>
+
+      <h3>Pot Modeling</h3>
+      <p>
+        The project began with the pot, modeled from a cylinder mesh. I scaled the base
+        inward to create a tapered shape, added an inset at the top opening, extruded
+        downward to form the inner wall, and then extruded the inner face outward to
+        create space for the soil.
+      </p>
+      <figure class="single">
+        <img src="media/process_1.png" alt="Blender screenshot of the tapered pot mesh">
+        <figcaption>Low-poly pot created from a cylinder mesh.</figcaption>
+      </figure>
+
+      <h3>First Stem Attempt</h3>
+      <p>
+        My first approach to the stems used cylinder meshes. I extruded, scaled, rotated,
+        and duplicated cylindrical segments to create a cluster of trunks similar to the
+        money tree reference.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/process_2.png" alt="Blender screenshot of early cylindrical stems">
+          <figcaption>Cylindrical stem cluster, early attempt.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/process_3.png" alt="Blender screenshot of stems inside the pot">
+          <figcaption>Stems placed inside the pot.</figcaption>
+        </figure>
+      </div>
+      <p>
+        However, the cylindrical topology made branching difficult. I realized it would be
+        hard to get clean, organic branch junctions with this approach, so I decided to
+        rethink both the plant choice and the modeling strategy.
+      </p>
+
+      <h3>Bézier Curve Stem</h3>
+      <p>
+        I switched to the fiddle leaf fig reference and rebuilt the main stem using a
+        Bézier curve. At first the curve is only a path in 3D space with no volume.
+        Using the curve’s bevel controls, I added thickness to turn it into a pipe-like
+        stalk, then adjusted individual control points and radii in Edit Mode to create
+        more organic, tapered variation along the stem and branches.
+      </p>
+      <figure class="single">
+        <img src="media/process_4.png" alt="Blender screenshot of a Bézier curve stem structure">
+        <figcaption>Branching stem built from a Bézier curve.</figcaption>
+      </figure>
+      <figure class="single">
+        <img src="media/process_5.png" alt="Blender screenshot of the stem with bevel thickness">
+        <figcaption>Curve with bevel applied to create a cylindrical stem.</figcaption>
+      </figure>
+
+      <h3>Leaf Modeling</h3>
+      <p>
+        Leaves were modeled from a simple square plane. I extruded edges outward to rough
+        in the silhouette, subdivided faces, and used proportional editing to push
+        vertices until the overall shape and curvature matched the fiddle leaf fig
+        reference. Additional tweaks added slight bends and asymmetry to keep the leaf
+        from feeling too mechanical.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/process_6.png" alt="Flat leaf mesh created from a plane">
+          <figcaption>Initial leaf mesh laid out as a flat plane.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/process_7.png" alt="Deformed leaf mesh with curvature">
+          <figcaption>Leaf shaped using proportional editing.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/process_8.png" alt="Top view of low-poly leaf">
+          <figcaption>Final low-poly leaf topology.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Procedural Shading & Materials</h3>
+      <p>
+        I used procedural shading to build an organic leaf material, adding subtle
+        variation in color and roughness plus simplified vein details. The finished
+        leaf was duplicated, translated, and rotated along the branches until each stem
+        felt balanced and believable.
+      </p>
+      <figure class="single">
+        <img src="media/process_9.png" alt="Blender shader node setup for the leaf material">
+        <figcaption>Procedural leaf material built with shader nodes.</figcaption>
+      </figure>
+      <p>
+        For the pot and soil I used Physically Based Rendering (PBR) materials downloaded
+        from Poly Haven. These were appended into the project’s Blender file and applied
+        to the respective meshes, giving the pot a worn stone look and the soil a more
+        detailed surface.
+      </p>
+      <figure class="single">
+        <img src="media/process_10.png" alt="Viewport view of the assembled low-poly plant">
+        <figcaption>Completed low-poly plant with pot, soil, stem, and leaves.</figcaption>
+      </figure>
+    </section>
+
+    <section id="rendering">
+      <h2>Rendering</h2>
+      <p>
+        For final presentation I rendered the plant inside a studio-style bedroom HDRI
+        environment using the Cycles render engine. The first render looked off because
+        the plant floated without a visible shadow. To solve this, I placed a simple mesh
+        plane beneath the pot and set it as a <em>Shadow Catcher</em> in the object
+        visibility settings. This allowed the HDRI to remain as the visible background
+        while the plane only contributed realistic contact shadows.
+      </p>
+
+      <div class="image-grid">
+        <figure>
+          <img src="media/render_1.png" alt="Render of the plant on a counter in a studio kitchen scene">
+          <figcaption>Plant rendered in a studio kitchen environment.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/render_2.png" alt="Render of the plant on a bedroom windowsill">
+          <figcaption>Cozy bedroom scene with the plant on a windowsill.</figcaption>
+        </figure>
+      </div>
+
+      <figure class="single">
+        <img src="media/render_3.png" alt="Third render of the plant among other potted plants">
+        <figcaption>Final render: low-poly plant integrated with other props.</figcaption>
+      </figure>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 2025 – Low-Poly Plant Project</p>
+    </footer>
+  </main>
+</body>
+</html>

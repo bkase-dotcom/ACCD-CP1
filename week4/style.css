@@ -1,0 +1,166 @@
+/* Basic reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-page: #f2f3f7;
+  --bg-card: #ffffff;
+  --accent: #1d7a6b;
+  --accent-soft: #80d2af;
+  --text-main: #222222;
+  --text-muted: #666666;
+  --border-subtle: #e0e3ea;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.4;
+  color: var(--text-main);
+  background: var(--bg-page);
+}
+
+/* Layout */
+.site-header {
+  background: linear-gradient(135deg, #111, #1d1d1d);
+  color: #fff;
+  padding: 0.5rem 1rem 0.5rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 2.0rem;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  margin: 0.45rem 0 0;
+  font-size: 0.98rem;
+  opacity: 0.85;
+}
+
+main {
+  max-width: 960px;
+  margin: 1.75rem auto 3.5rem;
+  padding: 2.25rem 1.75rem 2.5rem;
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+section {
+  margin-bottom: 2.75rem;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+
+
+h3 {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  color: #111;
+}
+
+p {
+  margin: 0.75rem 0;
+}
+
+em {
+  font-style: italic;
+}
+
+/* Images & figures */
+img {
+  max-width: auto;
+  height: 300px;
+  display: block;
+  border-radius: 8px;
+}
+
+figure {
+  margin: 1.25rem 0;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 0px solid rgba(0, 0, 0, 0.02);
+}
+
+figure.single img {
+  margin: 0 auto;
+}
+
+figcaption {
+  margin-top: 0.55rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  justify-content: center;
+}
+
+/* Grids */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.image-grid figure {
+  flex: 1 1 260px;
+}
+
+/* Footer */
+.site-footer {
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Small screens */
+@media (max-width: 768px) {
+  .site-header h1 {
+    font-size: 1.65rem;
+  }
+
+  main {
+    margin: 1.25rem 0.75rem 2.5rem;
+    padding: 1.75rem 1.25rem 2rem;
+  }
+
+  .image-grid {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    padding-inline: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+}
