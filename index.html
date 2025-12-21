@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ACCD-CP1</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; }
+    header { padding: 28px 20px 14px; border-bottom: 1px solid rgba(127,127,127,.25); }
+    h1 { margin: 0 0 6px; font-size: 34px; letter-spacing: -0.02em; }
+    .sub { margin: 0; opacity: .75; }
+    main { max-width: 980px; margin: 0 auto; padding: 18px 20px 40px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .pill { border: 1px solid rgba(127,127,127,.35); border-radius: 999px; padding: 8px 10px; display: inline-flex; gap: 8px; align-items: center; }
+    input[type="search"] { padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); width: min(520px, 100%); }
+    button { padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); background: transparent; cursor: pointer; }
+    button:hover { background: rgba(127,127,127,.08); }
+    a { color: inherit; }
+    .crumbs { margin: 16px 0 10px; opacity: .8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+    .card { border: 1px solid rgba(127,127,127,.25); border-radius: 16px; padding: 14px; }
+    .card h3 { margin: 0 0 6px; font-size: 16px; }
+    .meta { font-size: 13px; opacity: .7; }
+    .links { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(127,127,127,.35); opacity: .9; }
+    .muted { opacity: .7; }
+    footer { padding: 18px 20px; border-top: 1px solid rgba(127,127,127,.25); opacity: .75; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: .95em; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="max-width:980px;margin:0 auto;">
+      <h1>ACCD-CP1</h1>
+      <p class="sub">Creative Prototyping IXD — browse sketches & pages</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="row">
+      <span class="pill">
+        <strong>Repo</strong>
+        <span id="repoLabel" class="muted"></span>
+      </span>
+
+      <input id="search" type="search" placeholder="Filter folders/files (e.g., week8, sketch, responsive…)" />
+
+      <button id="upBtn" title="Go up one folder">Up</button>
+      <button id="homeBtn" title="Go to repo root">Home</button>
+      <button id="reloadBtn" title="Reload">Reload</button>
+    </div>
+
+    <div class="crumbs" id="crumbs"></div>
+
+    <div id="status" class="muted" style="margin-top:10px;"></div>
+
+    <section class="grid" id="grid"></section>
+  </main>
+
+  <footer>
+    Tip: Clicking a folder drills in. If a folder contains an <code>index.html</code>, you’ll see a “Open page” link.
+  </footer>
+
+<script>
+(() => {
+  // ✅ Set these to match your repo.
+  const OWNER = "bkase-dotcom";
+  const REPO  = "ACCD-CP1";
+  // If your Pages site is user-site (owner.github.io), base is "/REPO/".
+  const PAGES_BASE = "/" + REPO + "/";
+
+  const repoLabel = document.getElementById("repoLabel");
+  const grid = document.getElementById("grid");
+  const statusEl = document.getElementById("status");
+  const crumbsEl = document.getElementById("crumbs");
+  const searchEl = document.getElementById("search");
+  const upBtn = document.getElementById("upBtn");
+  const homeBtn = document.getElementById("homeBtn");
+  const reloadBtn = document.getElementById("reloadBtn");
+
+  repoLabel.textContent = `${OWNER}/${REPO}`;
+
+  // Use ?path=week2/responsivePage to drill in (so it works on GitHub Pages without server routing)
+  const getPathFromURL = () => {
+    const url = new URL(window.location.href);
+    const p = (url.searchParams.get("path") || "").replace(/^\/+|\/+$/g, "");
+    return p;
+  };
+
+  const setPathInURL = (path) => {
+    const url = new URL(window.location.href);
+    if (!path) url.searchParams.delete("path");
+    else url.searchParams.set("path", path);
+    history.pushState({}, "", url);
+  };
+
+  const joinPath = (a, b) => [a, b].filter(Boolean).join("/");
+
+  const apiURL = (path) =>
+    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path || "")}`.replace("%2F", "/");
+
+  async function fetchJSON(url) {
+    const res = await fetch(url, {
+      headers: {
+        "Accept": "application/vnd.github+json"
+      }
+    });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(`${res.status} ${res.statusText}${msg ? " — " + msg : ""}`);
+    }
+    return res.json();
+  }
+
+  function renderCrumbs(path) {
+    const parts = path ? path.split("/") : [];
+    const crumbs = [{ label: "root", path: "" }];
+    let acc = "";
+    for (const part of parts) {
+      acc = joinPath(acc, part);
+      crumbs.push({ label: part, path: acc });
+    }
+
+    crumbsEl.innerHTML = crumbs.map((c, i) => {
+      if (i === crumbs.length - 1) return `<strong>${escapeHTML(c.label)}</strong>`;
+      return `<a href="#" data-path="${escapeAttr(c.path)}">${escapeHTML(c.label)}</a> / `;
+    }).join("");
+
+    crumbsEl.querySelectorAll("a[data-path]").forEach(a => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const p = a.getAttribute("data-path") || "";
+        setPathInURL(p);
+        load(p);
+      });
+    });
+  }
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[m]));
+  }
+  function escapeAttr(s) { return escapeHTML(s).replace(/"/g, "&quot;"); }
+
+  async function hasIndexHTML(dirPath) {
+    try {
+      const items = await fetchJSON(apiURL(dirPath));
+      if (!Array.isArray(items)) return false;
+      return items.some(x => x.type === "file" && x.name.toLowerCase() === "index.html");
+    } catch {
+      return false;
+    }
+  }
+
+  function pagesLinkTo(path, file = "") {
+    // For user-site pages (bkase-dotcom.github.io), repo content lives under /REPO/
+    const p = path ? path + "/" : "";
+    return PAGES_BASE + p + file;
+  }
+
+  function githubLinkTo(path) {
+    const p = path ? "/" + path : "";
+    return `https://github.com/${OWNER}/${REPO}/tree/main${p}`;
+  }
+
+  function sortItems(items) {
+    return items.slice().sort((a, b) => {
+      // dirs first, then files; alpha
+      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+    });
+  }
+
+  async function render(path, items) {
+    renderCrumbs(path);
+
+    const q = (searchEl.value || "").trim().toLowerCase();
+    const filtered = sortItems(items).filter(it => it.name.toLowerCase().includes(q));
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="card"><h3>No matches</h3><div class="meta">Try a different filter.</div></div>`;
+      return;
+    }
+
+    // Build cards. For directories, we also check if they contain index.html to show “Open page”
+    grid.innerHTML = "";
+    for (const it of filtered) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const isDir = it.type === "dir";
+      const nextPath = joinPath(path, it.name);
+
+      card.innerHTML = `
+        <div class="row" style="justify-content:space-between;">
+          <h3>${isDir ? "📁 " : "📄 "}${escapeHTML(it.name)}</h3>
+          <span class="tag">${isDir ? "folder" : "file"}</span>
+        </div>
+        <div class="meta">${isDir ? "Browse this folder" : "View this file on GitHub"}</div>
+        <div class="links" id="links-${cssSafe(nextPath)}"></div>
+      `;
+
+      const links = card.querySelector(`#links-${cssSafe(nextPath)}`);
+
+      if (isDir) {
+        // Drill-in link (same page, updates ?path=)
+        const drill = document.createElement("a");
+        drill.href = "#";
+        drill.textContent = "Open folder";
+        drill.addEventListener("click", (e) => {
+          e.preventDefault();
+          setPathInURL(nextPath);
+          load(nextPath);
+        });
+        links.appendChild(drill);
+
+        // If it contains index.html, offer direct Pages link
+        const openPage = document.createElement("a");
+        openPage.textContent = "Check for index.html…";
+        openPage.href = "#";
+        openPage.className = "muted";
+        links.appendChild(openPage);
+
+        hasIndexHTML(nextPath).then(ok => {
+          if (ok) {
+            openPage.textContent = "Open page";
+            openPage.className = "";
+            openPage.href = pagesLinkTo(nextPath, "index.html");
+          } else {
+            openPage.textContent = "No index.html";
+            openPage.className = "muted";
+            openPage.removeAttribute("href");
+          }
+        });
+
+        // GitHub tree link
+        const gh = document.createElement("a");
+        gh.href = githubLinkTo(nextPath);
+        gh.textContent = "View on GitHub";
+        links.appendChild(gh);
+      } else {
+        const ghFile = document.createElement("a");
+        ghFile.href = it.html_url;
+        ghFile.textContent = "View on GitHub";
+        links.appendChild(ghFile);
+
+        // If this is an index.html file, also provide Pages link
+        if (it.name.toLowerCase() === "index.html") {
+          const open = document.createElement("a");
+          open.href = pagesLinkTo(path, "index.html");
+          open.textContent = "Open on Pages";
+          links.appendChild(open);
+        }
+      }
+
+      grid.appendChild(card);
+    }
+  }
+
+  function cssSafe(s) {
+    // keep it simple for element ids
+    return s.replace(/[^a-zA-Z0-9_-]/g, "_");
+  }
+
+  async function load(path) {
+    statusEl.textContent = "Loading…";
+    grid.innerHTML = "";
+
+    try {
+      const data = await fetchJSON(apiURL(path));
+      if (!Array.isArray(data)) throw new Error("Unexpected API response.");
+      statusEl.textContent = path ? `Showing: ${path}` : "Showing: root";
+      await render(path, data);
+    } catch (err) {
+      statusEl.textContent = "Could not load directory listing.";
+      grid.innerHTML = `
+        <div class="card">
+          <h3>Error</h3>
+          <div class="meta">${escapeHTML(err.message || String(err))}</div>
+          <div class="meta" style="margin-top:10px;">
+            If your default branch is not <code>main</code>, update the GitHub links in this file.
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Controls
+  searchEl.addEventListener("input", () => load(getPathFromURL()));
+  upBtn.addEventListener("click", () => {
+    const p = getPathFromURL();
+    if (!p) return;
+    const parts = p.split("/");
+    parts.pop();
+    const next = parts.join("/");
+    setPathInURL(next);
+    load(next);
+  });
+  homeBtn.addEventListener("click", () => {
+    setPathInURL("");
+    load("");
+  });
+  reloadBtn.addEventListener("click", () => load(getPathFromURL()));
+
+  window.addEventListener("popstate", () => load(getPathFromURL()));
+
+  // Boot
+  load(getPathFromURL());
+})();
+</script>
+</body>
+</html>
