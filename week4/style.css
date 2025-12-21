@@ -9,7 +9,7 @@
   --bg-page: #f2f3f7;
   --bg-card: #ffffff;
   --accent: #1d7a6b;
-  --accent-soft: #80d2af;
+  --accent-soft: #c0dacc;
   --text-main: #222222;
   --text-muted: #666666;
   --border-subtle: #e0e3ea;
@@ -25,7 +25,7 @@ body {
 
 /* Layout */
 .site-header {
-  background: linear-gradient(135deg, #111, #1d1d1d);
+  background: linear-gradient(180deg, #293a2d, #346840);
   color: #fff;
   padding: 0.5rem 1rem 0.5rem;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
@@ -93,7 +93,7 @@ em {
 
 /* Images & figures */
 img {
-  max-width: auto;
+  max-width: 100%;
   height: 300px;
   display: block;
   border-radius: 8px;
@@ -105,17 +105,28 @@ figure {
   border-radius: 10px;
   background: var(--accent-soft);
   border: 0px solid rgba(0, 0, 0, 0.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
 }
 
 figure.single img {
   margin: 0 auto;
 }
 
+figure.single {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 figcaption {
   margin-top: 0.55rem;
   font-size: 0.86rem;
   color: var(--text-muted);
-  justify-content: center;
+  text-align: left;
+  width: 100%;
 }
 
 /* Grids */
@@ -123,10 +134,23 @@ figcaption {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  justify-content: center;
 }
 
 .image-grid figure {
   flex: 1 1 260px;
+}
+
+.image-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+.image-row figure {
+  flex: 0 1 280px;
 }
 
 /* Footer */
@@ -152,6 +176,12 @@ figcaption {
 
   .image-grid {
     flex-direction: column;
+    align-items: center;
+  }
+
+  .image-row {
+    flex-direction: column;
+    align-items: center;
   }
 }
 
