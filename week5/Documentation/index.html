@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultra-Portable Piano: Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Ultra-Portable Piano: Project Documentation</h1>
+      <p class="subtitle">Studio-style product visualization in Blender</p>
+    </div>
+  </header>
+
+  <main>
+    <section id="background">
+      <h2>Modeling & Asset Preparation</h2>
+      <p>
+        The piano prototype was initially designed and modeled in Fusion 360, where I focused on establishing the overall proportions, key geometry, and housing form using a parametric workflow. Fusion allowed me to quickly iterate on dimensions, edge fillets, and component relationships while keeping the design grounded in real-world scale and manufacturability. 
+        Once the core components were finalized, the model was exported from Fusion 360 and imported into Blender for visualization, material work, and scene building. After import, the geometry was cleaned and organized into logical objects and collections to make it easier to work with during lighting, animation, and rendering. 
+        To create the full-length keyboard, I duplicated and repeated the key modules directly in Blender, aligning them precisely to extend the instrument while maintaining consistent spacing and proportions. This approach allowed me to efficiently scale the design without reworking the original Fusion model, while also taking advantage of Blender’s non-destructive transformation tools. 
+        By combining Fusion 360 for precise parametric modeling and Blender for layout, duplication, and visualization, I was able to move quickly from a functional design model into a presentation-ready prototype suitable for documentation and cinematic rendering.
+      </p>
+    </section>
+
+    <section id="inspiration">
+      <h2>Concept & Shot Plan</h2>
+      <p>
+        My initial concept was to place the piano in a hotel room environment, using a
+        desk or table to suggest portability and real-world travel use. As the project
+        evolved, I pivoted away from this contextual setting toward a more abstract,
+        expansive black studio space. This change allowed the piano to be presented with
+        the visual language of a professional product launch, where form, proportion,
+        and material take precedence over narrative context.
+      </p>
+
+      <figure class="single">
+        <img src="media/process1.jpg" alt="Early concept sketch and planning for studio setup">
+        <figcaption>Early concept planning for a studio-style product presentation.</figcaption>
+      </figure>
+    </section>
+
+    <section id="process">
+      <h2>Process</h2>
+
+      <h3>Base Scene Setup</h3>
+      <p>
+        The project began by isolating the piano model in a minimal Blender scene. The
+        world background was set to near-black to eliminate distractions and establish
+        a controlled studio environment. This approach kept the scene lightweight and
+        allowed for rapid iteration.
+      </p>
+      <figure class="single">
+        <img src="media/process2.png" alt="Initial Blender scene with piano model isolated">
+        <figcaption>Initial scene setup with the piano model isolated.</figcaption>
+      </figure>
+
+      <h3>Geometry & Proportion Refinement</h3>
+      <p>
+        I adjusted the piano’s overall length and proportions to ensure it read clearly
+        from low, elongated camera angles. Emphasizing the linear form of the keyboard
+        was important for communicating scale and portability.
+      </p>
+      <figure class="single">
+        <img src="media/process3.png" alt="Extended piano body proportions in Blender">
+        <figcaption>Refining the overall proportions of the piano body.</figcaption>
+      </figure>
+
+      <h3>Interface Elements</h3>
+      <p>
+        Simple cylindrical geometry was added to represent physical controls such as
+        knobs and buttons. At this stage, the focus was on silhouette and placement
+        rather than detailed interaction design.
+      </p>
+      <figure class="single">
+        <img src="media/process4.png" alt="Control knobs added to the piano surface">
+        <figcaption>Basic control elements added for interface readability.</figcaption>
+      </figure>
+
+      <h3>Table Asset Integration</h3>
+      <p>
+        A table asset downloaded from Poly Haven was appended into the scene to ground
+        the piano and provide a sense of scale. The table was intentionally kept neutral
+        so it would support the piano without drawing attention away from it.
+      </p>
+      <figure class="single">
+        <img src="media/process5.png" alt="Piano placed on imported table asset">
+        <figcaption>Staging the piano on a table for a studio-style presentation.</figcaption>
+      </figure>
+
+      <h3>Planned Camera Movement (Bezier Path)</h3>
+      <p>
+        Although the final submission focuses on still imagery, the scene was designed
+        with a cinematic intro animation in mind. A Bézier curve was created to act as
+        a camera path, starting close to the piano’s internal/control region, dollying
+        outward to reveal the body, sweeping along the keys, and resolving in an overhead
+        aerial shot. This planned motion influenced framing and layout decisions even
+        when camera constraints were temporarily disabled for still renders.
+      </p>
+      <figure class="single">
+        <img src="media/process6.png" alt="Bezier curve camera path in Blender">
+        <figcaption>Bezier curve used to plan a smooth product intro camera move.</figcaption>
+      </figure>
+    </section>
+
+    <section id="rendering">
+      <h2>Lighting & Rendering</h2>
+      <p>
+        The lighting setup followed a traditional studio photography approach using
+        area lights: a primary key light to define form, a soft fill light to manage
+        shadows, and a rim light to separate the piano from the dark background. While
+        early look development was done in EEVEE for speed, the final hero image was
+        rendered using the Cycles render engine for improved realism, softer shadows,
+        and more accurate material response.
+      </p>
+
+      <figure class="single">
+        <img src="media/render.png" alt="Final studio render of the ultra-portable piano">
+        <figcaption>Final Cycles render of the ultra-portable piano in a studio environment.</figcaption>
+      </figure>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 2025 — Ultra-Portable Piano Project</p>
+    </footer>
+  </main>
+</body>
+</html>
