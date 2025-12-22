@@ -8,19 +8,35 @@
 let orbitA;                 // horizontal radius of ellipse (set in setup)
 let orbitB = 80;            // vertical radius of ellipse (small => almost straight path in front)
 let orbitSpeed = 0.00015;    // radians per millisecond (controls moon speed)
+let stars = [];
+let starCount = 250;
+let fft;
+let audioSource = null;
+let micInput = null;
+let soundFile = null;
+let audioStatusEl;
+let playPauseBtn;
+let micBtn;
+let fileInputEl;
+let canvasAspect = 1200 / 520;
+let canvasPadY = 80;
 
 function setup() {
-  createCanvas(2000, 800);
+  let canvas = createCanvas(getSketchWidth(), getSketchHeight());
+  canvas.parent("sketch-holder");
   orbitA = width;     // wide enough that the moon goes off screen
+  initStars();
+  fft = new p5.FFT(0.8, 1024);
 }
 
 function draw() {
   background(0);
+  drawStars();
 
   // Sun position + size
   let sx = width / 2;
   let sy = height / 2;
-  let sd = 600;
+  let sd = min(width, height) * 0.8;
 
   // ---- MOON ORBIT (uses trig + time) ----
   // Angle along the orbit; grows continuously with time
@@ -53,10 +69,18 @@ function draw() {
   if (depth <= 0) {
     drawMoon(mx, my, moonD, moonBrightness); // behind
     drawSun(sx, sy, sd);
+    drawAura(sx, sy, sd);
   } else {
     drawSun(sx, sy, sd);
+    drawAura(sx, sy, sd);
     drawMoon(mx, my, moonD, moonBrightness); // in front
   }
+}
+
+function windowResized() {
+  resizeCanvas(getSketchWidth(), getSketchHeight());
+  orbitA = width;
+  initStars();
 }
 
 // ----- MOON -----
@@ -105,18 +129,180 @@ function drawSun(x, y, diameter) {
 
 function drawStars() {
   noStroke();
-  let t = millis() * 0.0005; // time component for smooth twinkle
+  let t = millis() * 0.002; // time component for twinkle
 
   for (let i = 0; i < stars.length; i++) {
     let s = stars[i];
 
-    // Per-star noise: noiseSeed gives each star a unique twinkle pattern
-    let n = noise(s.noiseSeed, t); // 0–1
+    // Per-star noise: each star has its own phase + speed
+    let n = noise(s.noiseSeed, t * s.speed); // 0–1
 
     // Map noise to brightness (how much it "twinkles")
-    let bright = map(n, 0, 1, 120, 255);
+    let bright = map(n, 0, 1, 80, 255);
+    let r = s.baseR * map(n, 0, 1, 0.6, 1.4);
 
     fill(bright);
-    circle(s.x, s.y, 3); // same size for all stars
+    circle(s.x, s.y, r);
+  }
+}
+
+function drawAura(x, y, diameter) {
+  let spectrum = fft.analyze();
+  let baseR = diameter * 0.52;
+
+  drawAuraRing(x, y, baseR + 18, 16, [255, 190, 90, 160], spectrum, 60, 250);
+  drawAuraRing(x, y, baseR + 42, 24, [255, 150, 60, 140], spectrum, 250, 2000);
+  drawAuraRing(x, y, baseR + 70, 34, [255, 120, 40, 110], spectrum, 2000, 9000);
+}
+
+function drawAuraRing(x, y, radius, amp, rgba, spectrum, fMin, fMax) {
+  let points = 220;
+  let logMin = Math.log(fMin);
+  let logMax = Math.log(fMax);
+  let angleOffset = millis() * 0.00015;
+  let mags = new Array(points);
+  let pts = [];
+
+  noFill();
+  stroke(rgba[0], rgba[1], rgba[2], rgba[3]);
+  strokeWeight(2);
+  for (let i = 0; i < points; i++) {
+    let u = i / points;
+    let angle = u * TWO_PI + angleOffset;
+    let freq = Math.exp(logMin + u * (logMax - logMin));
+    let mag = sampleSpectrumAtFreq(spectrum, freq);
+    mags[i] = mag;
+  }
+
+  // Circular smoothing to remove seam at the wrap
+  for (let i = 0; i < points; i++) {
+    let prev = mags[(i - 1 + points) % points];
+    let next = mags[(i + 1) % points];
+    let smooth = (prev + mags[i] + next) / 3;
+    let u = i / points;
+    let angle = u * TWO_PI + angleOffset;
+    let wobble = map(smooth, 0, 255, -amp, amp);
+    let r = radius + wobble;
+    let px = x + cos(angle) * r;
+    let py = y + sin(angle) * r;
+    pts.push({ x: px, y: py });
+  }
+  beginShape();
+  curveVertex(pts[points - 1].x, pts[points - 1].y);
+  for (let i = 0; i < points; i++) {
+    curveVertex(pts[i].x, pts[i].y);
+  }
+  curveVertex(pts[0].x, pts[0].y);
+  curveVertex(pts[1].x, pts[1].y);
+  endShape(CLOSE);
+}
+
+function sampleSpectrumAtFreq(spectrum, freq) {
+  let nyquist = getAudioContext().sampleRate / 2;
+  let idx = floor(constrain(freq / nyquist, 0, 0.999) * spectrum.length);
+  let sum = 0;
+  let count = 0;
+  for (let i = -1; i <= 1; i++) {
+    let j = constrain(idx + i, 0, spectrum.length - 1);
+    sum += spectrum[j];
+    count++;
+  }
+  return sum / count;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < starCount; i++) {
+    stars.push({
+      x: random(width),
+      y: random(height),
+      baseR: random(1, 3),
+      noiseSeed: random(1000),
+      speed: random(0.8, 2.5)
+    });
+  }
+}
+
+function getSketchWidth() {
+  let holder = document.getElementById("sketch-holder");
+  return holder ? holder.clientWidth : window.innerWidth;
+}
+
+function getSketchHeight() {
+  let w = getSketchWidth();
+  return max(280, floor(w / canvasAspect) + canvasPadY);
+}
+
+function bindAudioUI() {
+  audioStatusEl = document.getElementById("audioStatus");
+  playPauseBtn = document.getElementById("playPause");
+  micBtn = document.getElementById("useMic");
+  fileInputEl = document.getElementById("audioFile");
+
+  if (fileInputEl) {
+    fileInputEl.addEventListener("change", handleFileUpload);
+  }
+  if (playPauseBtn) {
+    playPauseBtn.addEventListener("click", togglePlayPause);
+  }
+  if (micBtn) {
+    micBtn.addEventListener("click", startMic);
+  }
+}
+
+function handleFileUpload(event) {
+  let file = event.target.files[0];
+  if (!file) return;
+  userStartAudio();
+
+  if (soundFile) {
+    soundFile.stop();
+    soundFile.disconnect();
+  }
+  let url = URL.createObjectURL(file);
+  soundFile = loadSound(url, () => {
+    URL.revokeObjectURL(url);
+    soundFile.loop();
+    setAudioInput(soundFile, "Playing uploaded audio");
+  }, () => {
+    setStatus("Failed to load audio");
+  });
+}
+
+function togglePlayPause() {
+  if (!soundFile) {
+    setStatus("Load an audio file first");
+    return;
+  }
+  if (soundFile.isPlaying()) {
+    soundFile.pause();
+    setStatus("Paused");
+  } else {
+    soundFile.play();
+    setStatus("Playing uploaded audio");
+  }
+}
+
+function startMic() {
+  userStartAudio();
+  if (!micInput) {
+    micInput = new p5.AudioIn();
+  }
+  micInput.start(() => {
+    setAudioInput(micInput, "Using microphone input");
+  }, () => {
+    setStatus("Microphone access denied");
+  });
+}
+
+function setAudioInput(input, statusText) {
+  audioSource = input;
+  fft.setInput(audioSource);
+  setStatus(statusText);
+}
+
+function setStatus(text) {
+  if (audioStatusEl) {
+    audioStatusEl.textContent = text;
   }
 }

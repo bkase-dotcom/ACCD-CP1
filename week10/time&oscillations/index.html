@@ -2,17 +2,185 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>p5.js Sketch</title>
+  <title>Eclipse Study: Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 
   <!-- Load p5.js from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
 
   <!-- (Optional) p5.sound -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/addons/p5.sound.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/addons/p5.sound.min.js"></script>
 </head>
 
 <body>
-  <!-- Your sketch -->
+  <div class="page">
+    <header class="site-header">
+      <div class="header-inner">
+        <h1>Eclipse Study: Project Documentation</h1>
+        <p class="subtitle">Time, oscillation, and layered motion in p5.js</p>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="sketch-section">
+        <div class="tile" id="sketch-tile">
+          <div class="controls">
+            <label>
+              Upload audio
+              <input id="audioFile" type="file" accept="audio/*" />
+            </label>
+            <button id="playPause">Play / Pause</button>
+            <button id="useMic">Use Mic</button>
+            <span class="status" id="audioStatus">No audio loaded</span>
+          </div>
+          <div id="sketch-holder"></div>
+        </div>
+      </section>
+
+      <section id="background">
+        <h2>Project Context & Goals</h2>
+        <p>
+          This project began as an exploration of time-based animation and oscillatory motion
+          using p5.js. The assignment required the use of trigonometric functions, time-driven
+          intervals, desynchronized motion, and organic variation through randomness or noise.
+          Rather than treating these requirements as isolated techniques, I approached the
+          sketch as a system—using a solar eclipse as a visual metaphor for layered motion,
+          depth, and signal-driven behavior.
+          <br><br>
+          The goal was to create a scene where multiple parameters—position, scale, brightness,
+          and draw order—were all linked through shared time and signal inputs, resulting in a
+          continuously evolving animation rather than a simple loop.
+        </p>
+      </section>
+
+      <section id="inspiration">
+        <h2>Concept & Visual Direction</h2>
+        <p>
+          The core concept was a lateral view of a moon orbiting a sun, passing alternately in
+          front of and behind it. This perspective allowed depth to be communicated through
+          size changes, brightness shifts, and occlusion, rather than explicit 3D rendering.
+          A minimal black space background was chosen to keep focus on motion, rhythm, and
+          layered behavior rather than environmental detail.
+        </p>
+
+        <figure class="single">
+          <img src="assets/process1.png" alt="Early eclipse motion sketch">
+          <figcaption>
+            Early conceptual sketch exploring lateral eclipse motion and off-screen orbital paths.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="process">
+        <h2>Process</h2>
+
+        <h3>Textured Sun Foundation</h3>
+        <p>
+          The project began with the construction of a static sun rendered as a circle filled
+          using Perlin noise. Instead of applying noise directly as a texture, the surface was
+          sampled on a grid and drawn using many small points, with noise values mapped to subtle
+          color variation. Introducing a third noise dimension tied to time created a slow,
+          boiling motion that established the organic visual language of the sketch.
+        </p>
+        <figure class="single">
+          <img src="assets/process 2.png" alt="Perlin noise sun texture">
+          <figcaption>
+            Initial Perlin-noise-driven sun surface with animated texture.
+          </figcaption>
+        </figure>
+
+        <h3>Early Orbital Motion Experiments</h3>
+        <p>
+          Initial attempts at moon motion relied on sinusoidal offsets applied directly to
+          position. While this satisfied the requirement for trigonometric movement, the
+          resulting path appeared artificial and lacked a clear spatial relationship to
+          the sun. This iteration highlighted the need for a more physically legible orbital
+          structure.
+        </p>
+        <figure class="single">
+          <img src="assets/process3.png" alt="Early moon motion tests">
+          <figcaption>
+            Early moon motion experiments using simple sinusoidal offsets.
+          </figcaption>
+        </figure>
+
+        <h3>Elliptical Orbit & Depth Encoding</h3>
+        <p>
+          The moon’s motion was redefined using an ellipse parameterized by sine and cosine.
+          A single trigonometric value was treated as a proxy for depth, allowing the sketch
+          to infer whether the moon was closer or farther from the viewer. This depth value
+          became the driver for multiple visual parameters, including scale, brightness,
+          and draw order.
+        </p>
+        <figure class="single">
+          <img src="assets/process4.png" alt="Elliptical orbit implementation">
+          <figcaption>
+            Elliptical orbit implementation with depth-driven size and layering.
+          </figcaption>
+        </figure>
+
+        <h3>Front and Back Eclipse Behavior</h3>
+        <p>
+          To reinforce the illusion of depth, the moon was rendered darker when passing in
+          front of the sun and brighter when behind it, mimicking the way light would behave
+          in a real eclipse scenario. Explicit control over draw order ensured that the moon
+          could properly occlude the sun during the front pass and disappear behind it during
+          the back pass.
+        </p>
+        <figure class="single">
+          <img src="assets/process5.png" alt="Front eclipse pass">
+          <figcaption>
+            Moon passing in front of the sun with darkened surface and occlusion.
+          </figcaption>
+        </figure>
+
+        <figure class="single">
+          <img src="assets/process6.png" alt="Back eclipse pass">
+          <figcaption>
+            Moon passing behind the sun, rendered smaller and brighter to suggest depth.
+          </figcaption>
+        </figure>
+
+        <h3>Environmental Context: Starfield</h3>
+        <p>
+          A procedural starfield was added to provide spatial context. Stars were randomly
+          distributed once and assigned fixed noise coordinates. Over time, noise-driven
+          brightness variation produced a subtle twinkling effect without abrupt flicker,
+          reinforcing the project’s emphasis on smooth temporal change.
+        </p>
+      </section>
+
+      <section id="rendering">
+        <h2>System Integration & Audio Response</h2>
+        <p>
+          In the final phase, the sketch was extended into a more complete system. Audio
+          input was integrated using p5.sound and FFT analysis, enabling a three-layer
+          solar aura that responds dynamically to sound. Log-scaled frequency mapping
+          ensured that multiple frequency bands contributed meaningfully to the visual
+          output.
+          <br><br>
+          The project was migrated into VS Code and embedded within a structured HTML layout.
+          UI controls were added for audio upload, playback, and microphone input, and the
+          canvas was placed inside a responsive container with careful padding to prevent
+          visual clipping. CSS styling unified the controls and visualization into a single,
+          cohesive interactive tile.
+        </p>
+        <figure class="single">
+          <img src="assets/process7.png" alt="Final integrated system with starfield and audio-reactive aura">
+          <figcaption>
+            Starfield merged with the audio-reactive system and responsive embed.
+          </figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2025 — Eclipse Study: Time & Oscillation</p>
+    </footer>
+  </div>
   <script src="sketch.js"></script>
+  <script src="ui.js"></script>
 </body>
 </html>
