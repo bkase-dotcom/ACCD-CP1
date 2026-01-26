@@ -1,124 +1,170 @@
-# Flow Field Visualization - Rhythmic Wave Pattern
+# Rooted Vector Field Visualization
 
-A P5.js sketch creating a wave-like vector field visualization inspired by macOS screensaver aesthetics. Particles follow smooth, evolving Perlin noise fields to create organic, flowing patterns with dynamic HSB color gradients.
+A P5.js visualization where vectors remain anchored to grid positions and animate by changing their direction and length over time. Inspired by fluid dynamics flow field visualizations and macOS vector screensavers.
+
+## Visual Concept
+
+Unlike particle-based flow fields, this visualization shows the **field itself** - each vector is rooted to a specific position and displays:
+- **Direction**: Where the flow is pointing at that location
+- **Magnitude**: How strong the flow is (shown by vector length)
+- **Color**: HSB mapping based on angle and strength
+
+The result is a mesmerizing, wave-like pattern of arrows that ebb and flow across the screen.
 
 ## Features
 
-- **Flow Field System**: Grid-based vector field using Perlin noise
-- **3000 Particles**: Following the field with physics-based movement
-- **HSB Color Mode**: Dynamic colors based on velocity angle and position
-- **Non-linear Motion**: Smooth, organic movement using noise functions
-- **Trail Effects**: Semi-transparent background creates flowing line patterns
-- **Responsive**: Adapts to window size
-- **Interactive**: Press 'R' to reset the visualization
+- **Rooted Grid System**: Vectors stay in fixed positions
+- **Dynamic Animation**: Angles and lengths change smoothly based on Perlin noise
+- **HSB Color Mode**: Hue shifts with direction, saturation/brightness with magnitude
+- **Smooth Interpolation**: Lerping prevents jarring transitions
+- **Interactive Controls**: Adjust grid spacing and reset patterns
+- **Arrowheads**: Visual indicators showing direction clearly
+- **Trail Effects**: Semi-transparent background creates motion blur
+
+## Controls
+
+- **R** - Reset and jump to new noise pattern
+- **+** - Increase vector spacing (fewer, larger vectors)
+- **-** - Decrease vector spacing (more, smaller vectors)
 
 ## How to Run
 
-1. Open `index.html` in a web browser
-2. The sketch will fill the entire window
-3. Press 'R' to reset and regenerate particles
+1. Open `index_rooted.html` in a web browser
+2. Watch the vectors dance and flow
+3. Use keyboard controls to adjust the visualization
 
 ## Technical Implementation
 
-### Core Components
+### Core Architecture
 
-1. **Flow Field Grid**: 
-   - Divides canvas into cells (20x20 pixels)
-   - Each cell contains a vector direction
-   - Updated every frame using 3D Perlin noise
-
-2. **Particle System**:
-   - 3000 particles with position, velocity, acceleration
-   - Each follows nearest flow field vector
-   - Wraps around edges for continuous flow
-
-3. **Color System (HSB)**:
-   - Hue: Based on velocity direction + time offset
-   - Saturation: Maps to particle speed (50-100%)
-   - Brightness: Maps to particle speed (60-100%)
+```
+Grid of FlowVector objects
+    ↓
+Each frame:
+    1. Calculate angle from 3D Perlin noise (xoff, yoff, zoff)
+    2. Calculate magnitude from separate noise field
+    3. Smoothly interpolate to new values (lerp)
+    4. Draw vector line with arrowhead
+    5. Color based on angle + magnitude
+```
 
 ### Key Parameters
 
 ```javascript
-scl = 20          // Flow field resolution
-inc = 0.1         // Noise detail level
-zoff += 0.003     // Time evolution speed
-numParticles = 3000
-maxSpeed = 2
-background(0, 0, 0, 5)  // Trail alpha
+scl = 40          // Grid spacing (adjustable with +/-)
+inc = 0.08        // Noise sampling resolution
+zoff += 0.002     // Time evolution speed
+lerp(..., 0.1)    // Smoothing factor (lower = smoother)
 ```
+
+### Dual Noise Fields
+
+The sketch uses **two independent Perlin noise fields**:
+1. **Angle Field**: `noise(xoff, yoff, zoff)` - determines direction
+2. **Magnitude Field**: `noise(xoff + 1000, yoff + 1000, zoff * 0.5)` - determines length
+
+This separation creates more interesting patterns where direction and strength vary independently.
 
 ## Development Process
 
 ### Problems Encountered & Solutions
 
-1. **Initial Chaos**: First attempt showed particles moving randomly with no cohesive flow
-   - **Solution**: Reduced noise increment from 0.3 to 0.1 for smoother field transitions
+1. **Vectors Changing Too Abruptly**: Initial implementation had no interpolation
+   - **Solution**: Added lerp() for smooth angle and magnitude transitions (0.1 factor)
 
-2. **Performance Issues**: 5000 particles caused significant lag
-   - **Solution**: Optimized to 3000 particles and simplified color calculations
+2. **Uniform Vector Lengths**: All vectors same size looked static
+   - **Solution**: Implemented separate noise field for magnitude calculation
 
-3. **Color Monotony**: All particles had same hue at start
-   - **Solution**: Added individual `hueOffset` to each particle for variation
+3. **Angle Wrapping Issues**: Vectors would "flip" 180° when angle wrapped from 2π to 0
+   - **Solution**: Perlin noise naturally produces smooth values, avoiding abrupt wraps
 
-4. **Trails Too Faint**: Couldn't see the flowing patterns clearly
-   - **Solution**: Adjusted background alpha from 2 to 5 and strokeWeight from 1 to 1.5
+4. **Hard to See Direction**: Lines alone didn't clearly show flow direction
+   - **Solution**: Added triangle arrowheads at vector endpoints
 
-5. **Jarring Edge Behavior**: Particles would jump when wrapping around edges
-   - **Solution**: Updated `prevPos` when wrapping to prevent drawing lines across screen
+5. **Color Monotony**: All vectors similar hue
+   - **Solution**: Combined angle-based hue with time-based rotation: `(degrees(this.angle) + frameCount * 0.2) % 360`
 
-6. **Static Patterns**: Field wasn't evolving enough over time
-   - **Solution**: Implemented 3D Perlin noise with slowly incrementing Z-axis (`zoff`)
+6. **Vectors Too Faint**: Couldn't see patterns clearly
+   - **Solution**: Increased alpha to 80, added small dots at vector origins
 
-7. **Color Bleeding**: Similar hues made patterns blend together
-   - **Solution**: Combined angle-based hue with time-based offset: `(map(angle, -PI, PI, 0, 360) + this.hueOffset + frameCount * 0.1) % 360`
+7. **Grid Size Fixed**: Couldn't adapt to different aesthetic preferences
+   - **Solution**: Added keyboard controls (+/-) to adjust spacing dynamically
 
-8. **Window Resize Issues**: Field wouldn't recalculate on resize
-   - **Solution**: Added `windowResized()` function to recalculate grid dimensions
+8. **Performance at Small Grid Sizes**: Too many vectors caused lag
+   - **Solution**: Set minimum spacing of 20 pixels to prevent excessive vector count
+
+9. **Harsh Visual Transitions**: Background cleared fully each frame
+   - **Solution**: Semi-transparent background (alpha 25) creates smooth trails
+
+10. **Arrowhead Size Issues**: Arrows were same size regardless of vector length
+    - **Solution**: Map arrowhead size to vector magnitude: `map(this.mag, 0, scl * 0.8, 3, 8)`
 
 ---
 
-## Deep Dive: The Color Bleeding Problem
+## Deep Dive: The Smooth Interpolation Challenge
 
 ### The Problem
 
-During initial development, one of the most visually frustrating issues was what I called "color bleeding" - the phenomenon where particles in similar flow regions would all display nearly identical colors, creating large monochromatic patches instead of the desired rainbow gradient effect seen in the reference image. The visualization looked flat and lacked the rich color variation that makes flow field art compelling. When particles moved in the same direction (which happens frequently in flow fields due to their continuous nature), they would all share the same hue, causing entire swaths of the screen to appear as single-color blocks rather than smooth gradients.
+When I first implemented the rooted vector field, the vectors would update instantly to their new angles and magnitudes each frame based on the Perlin noise values. While Perlin noise is inherently smooth in space, the temporal changes - even though gradual - created a jittery, stroboscopic effect that was visually jarring. Vectors would "snap" to new orientations rather than gracefully rotating into them. This was especially noticeable at higher noise evolution speeds (`zoff` increment). The mathematical smoothness of the noise function wasn't translating into visual smoothness because each vector was jumping directly to each new calculated state without any temporal smoothing.
 
-The root cause was my initial color calculation: `let hue = map(angle, -PI, PI, 0, 360)`. This approach seemed logical - map the velocity angle directly to the hue spectrum - but it failed to account for the coherent nature of flow fields. Since neighboring particles tend to move in similar directions due to the smooth Perlin noise field, they would calculate nearly identical angles, resulting in identical hues. This created the "bleeding" effect where large regions were dominated by single colors, especially in areas where the flow was uniform.
+The core issue was the disconnect between **spatial continuity** (smooth transitions between neighboring vectors) and **temporal continuity** (smooth transitions over time for individual vectors). Perlin noise guarantees the former but not the latter. At `zoff += 0.002`, the noise was changing slowly enough that mathematically the difference between frames was small, but perceptually, the human eye could detect the discrete jumps. This created a flickering quality that undermined the fluid, organic aesthetic I was aiming for.
 
 ### The Solution
 
-The solution required introducing multiple layers of variation to break up the color uniformity while still maintaining the angle-based foundation. I implemented a three-part color calculation system:
+I implemented a **double-buffered interpolation system** using `lerp()` (linear interpolation). Each `FlowVector` object now maintains both its current display state (`this.angle`, `this.mag`) and its target state (`this.targetAngle`, `this.targetMag`). Every frame, the noise calculation produces new target values, but instead of immediately adopting them, the vector smoothly transitions using: `this.angle = lerp(this.angle, this.targetAngle, 0.1)`.
 
-1. **Per-particle hue offset**: Each particle receives a random `hueOffset` between 0-360 during initialization, giving every particle a unique "starting point" on the color wheel
-2. **Time-based rotation**: Adding `frameCount * 0.1` causes all hues to slowly rotate over time, creating shimmering, evolving color patterns
-3. **Modulo wrapping**: Using `% 360` ensures hues wrap smoothly around the color wheel
+The magic happens in that `0.1` parameter - the interpolation factor. This means each frame, the current value moves 10% of the way toward the target. This creates an exponential easing curve where changes start fast and slow down as they approach the target. If the target moves (which it does continuously due to evolving noise), the current value "chases" it, creating organic, flowing motion. Setting this value was critical: too high (0.5+) and you lose the smoothing benefit; too low (0.01) and vectors lag noticeably behind the field evolution. At 0.1, there's perfect balance - vectors feel responsive while maintaining fluid, continuous motion. This technique essentially applies temporal anti-aliasing to the motion, making the discrete frame-by-frame updates imperceptible and creating the illusion of perfectly smooth, continuous rotation and length changes. Combined with the trail effect from semi-transparent backgrounds, this interpolation transforms the sketch from a series of static snapshots into genuine flowing animation.
 
-The final formula became: `let hue = (map(angle, -PI, PI, 0, 360) + this.hueOffset + frameCount * 0.1) % 360`
+## Design Variations to Try
 
-This solution preserved the directional color relationship (particles moving in similar directions still have related hues) while adding enough variation to create beautiful gradients. The time-based component adds a fourth dimension to the visualization, making it truly dynamic. Now, even in regions of uniform flow, you see subtle rainbow gradients as each particle's unique offset creates local color variation, while the slow rotation over time ensures the entire composition constantly evolves. This transformed the visualization from flat color blocks into the rich, flowing spectrum that captures the aesthetic of the reference image.
+### More Vectors, Subtle Movement
+```javascript
+scl = 20          // Dense grid
+zoff += 0.001     // Very slow evolution
+```
 
-## Possible Enhancements
+### Fewer Vectors, Dynamic Movement
+```javascript
+scl = 60          // Sparse grid
+zoff += 0.005     // Faster evolution
+background(0)     // No trails (sharp)
+```
 
-- [ ] Add mouse interaction (attract/repel particles)
-- [ ] Integrate p5.sound for audio reactivity
-- [ ] Add occasional "burst" events with randomness
-- [ ] Load background image to influence field direction
-- [ ] Implement multiple layered flow fields
-- [ ] Add particle size variation based on speed
-- [ ] Create color palette selector
+### Psychedelic Mode
+```javascript
+inc = 0.2         // Higher noise frequency
+frameCount * 0.5  // Faster color rotation
+```
 
 ## Requirements Met
 
-✅ Visual pattern created in P5.js  
-✅ Rhythmic composition with variation  
-✅ HSB color mode with dynamic color variations  
-✅ Loops used for iteration (flow field grid)  
+✅ Visual pattern in P5.js sketch  
+✅ Rhythmic composition with variation across window  
+✅ HSB color mode demonstrating variations  
+✅ Loops for iteration (nested grid loops)  
 ✅ Attention to composition and symmetry  
-✅ Animation with complex, non-linear movement  
-✅ Randomness/noise for desired effects  
-✅ Documentation of problems and solutions  
+✅ Animation expressing complex, non-linear movement  
+✅ Noise used to achieve organic flow  
+✅ Comprehensive documentation of problems/solutions  
+
+## Possible Enhancements
+
+- [ ] Mouse interaction (warp field around cursor)
+- [ ] Add p5.sound for audio-reactive magnitude
+- [ ] Multiple color schemes/palettes
+- [ ] 3D version using WEBGL
+- [ ] Export as video/GIF
+- [ ] Add "curl" calculation for rotational effects
+- [ ] Particle overlay showing actual flow paths
+
+## Technical Notes
+
+**Why separate noise fields for angle and magnitude?**  
+Using the same noise field for both creates coupling - areas of high magnitude would always point in certain directions. Separating them (by offsetting the noise coordinates by 1000 units) creates independence, resulting in richer, more varied patterns.
+
+**Why the +1000 offset?**  
+Perlin noise is deterministic - the same coordinates always return the same value. By sampling from `(xoff + 1000, yoff + 1000)` for magnitude, we're essentially reading from a completely different "region" of the infinite noise space, ensuring independence from the angle field.
 
 ## Credits
 
-Concept inspired by macOS vector field screensaver and flow field visualizations by Tyler Hobbs and others in the generative art community.
+Inspired by fluid dynamics visualizations, vector field plots, and the macOS screensaver. Techniques influenced by Daniel Shiffman's Coding Train tutorials on flow fields.
