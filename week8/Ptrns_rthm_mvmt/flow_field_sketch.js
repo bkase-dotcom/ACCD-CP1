@@ -15,55 +15,57 @@ let particleSpeed = 2; // Max particle speed
 let evolutionSpeed = 0.003; // Flow field evolution rate
 let strokeWeightValue = 1.5; // Line thickness
 let currentPalette = 'original'; // Current color scheme
+let curvatureScale = 500; // Scale factor for curvature-to-color mapping
 
 // Vortex system for creating more swirling patterns
 let vortices = [];
 let numVortices = 4; // Number of vortex centers
 
-// Color Palettes (inspired by Flux)
+// Color Palettes - color mapped from instantaneous radius of curvature
+// logK range is approximately 0 (straight) to 4 (tight spiral)
 const colorPalettes = {
   original: {
     name: 'Original',
-    getColor: (angle, speed, hueOffset, frameCount) => {
-      let hue = (map(angle, -PI, PI, 0, 360) + hueOffset + frameCount * 0.1) % 360;
+    getColor: (logK, speed, hueOffset) => {
+      let hue = (map(logK, 0, 4, 200, 420) + hueOffset * 0.3) % 360;
       let sat = map(speed, 0, particleSpeed, 50, 100);
-      let bright = map(speed, 0, particleSpeed, 60, 100);
+      let bright = map(logK, 0, 4, 55, 100);
       return [hue, sat, bright, 40];
     }
   },
   plasma: {
     name: 'Plasma',
-    getColor: (angle, speed, hueOffset, frameCount) => {
-      let hue = (map(angle, -PI, PI, 280, 340) + frameCount * 0.15) % 360; // Purple-magenta range
+    getColor: (logK, speed, hueOffset) => {
+      let hue = (map(logK, 0, 4, 260, 340) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 80, 100);
-      let bright = map(speed, 0, particleSpeed, 70, 100);
+      let bright = map(logK, 0, 4, 60, 100);
       return [hue, sat, bright, 50];
     }
   },
   poolside: {
     name: 'Poolside',
-    getColor: (angle, speed, hueOffset, frameCount) => {
-      let hue = (map(angle, -PI, PI, 170, 210) + frameCount * 0.08) % 360; // Cyan-blue range
+    getColor: (logK, speed, hueOffset) => {
+      let hue = (map(logK, 0, 4, 170, 230) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 60, 95);
-      let bright = map(speed, 0, particleSpeed, 65, 100);
+      let bright = map(logK, 0, 4, 60, 100);
       return [hue, sat, bright, 45];
     }
   },
   sunset: {
     name: 'Sunset',
-    getColor: (angle, speed, hueOffset, frameCount) => {
-      let hue = (map(angle, -PI, PI, 0, 60) + frameCount * 0.12) % 360; // Red-orange-yellow range
+    getColor: (logK, speed, hueOffset) => {
+      let hue = (map(logK, 0, 4, 0, 60) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 70, 100);
-      let bright = map(speed, 0, particleSpeed, 60, 100);
+      let bright = map(logK, 0, 4, 60, 100);
       return [hue, sat, bright, 45];
     }
   },
   monochrome: {
     name: 'Monochrome',
-    getColor: (angle, speed, hueOffset, frameCount) => {
+    getColor: (logK, speed, hueOffset) => {
       let hue = 0;
       let sat = 0;
-      let bright = map(speed, 0, particleSpeed, 40, 100);
+      let bright = map(logK, 0, 4, 30, 100);
       return [hue, sat, bright, 35];
     }
   }
@@ -127,6 +129,10 @@ function draw() {
 
   // Evolve the flow field over time
   zoff += evolutionSpeed;
+
+  // Set rendering state once before particle loop
+  strokeWeight(strokeWeightValue);
+  noFill();
 
   // Update and render all particles
   for (let i = 0; i < particles.length; i++) {
@@ -223,8 +229,13 @@ class Particle {
     this.pos = createVector(random(width), random(height));
     this.vel = createVector(0, 0);
     this.acc = createVector(0, 0);
-    this.prevPos = this.pos.copy();
+    this.smoothK = 0; // EMA-smoothed curvature
     this.hueOffset = random(360); // Individual color variation
+    this.speed = 0; // Cached speed to avoid recomputing
+    this.stepsThisFrame = 0;
+    // Flat coordinate arrays — avoids creating Vector objects per sub-step
+    this.hx = [];
+    this.hy = [];
   }
 
   get maxSpeed() {
@@ -240,22 +251,55 @@ class Particle {
     // Bounds checking
     if (index >= 0 && index < vectors.length) {
       let force = vectors[index];
-      this.applyForce(force);
+      this.acc.add(force);
     }
   }
 
-  applyForce(force) {
-    this.acc.add(force);
-  }
-
   update() {
+    // Capture heading before forces are applied
+    let prevHeading = this.vel.heading();
+
     this.vel.add(this.acc);
     this.vel.limit(this.maxSpeed);
-    this.pos.add(this.vel);
+
+    // Compute instantaneous curvature: κ = |dθ/ds|
+    let speed = this.vel.mag();
+    this.speed = speed;
+    if (speed > 0.01) {
+      let dTheta = this.vel.heading() - prevHeading;
+      // Normalize angle difference to [-PI, PI]
+      if (dTheta > PI) dTheta -= TWO_PI;
+      if (dTheta < -PI) dTheta += TWO_PI;
+      let kappa = abs(dTheta) / speed;
+      // Smooth with exponential moving average
+      this.smoothK = lerp(this.smoothK, kappa, 0.08);
+    }
+
+    // Sub-step position updates for smoother trails at high speeds
+    // Direct arithmetic avoids p5.Vector.div() allocation
+    let numSteps = max(1, ceil(speed / 2));
+    let svx = this.vel.x / numSteps;
+    let svy = this.vel.y / numSteps;
+    this.stepsThisFrame = numSteps;
+
+    for (let s = 0; s < numSteps; s++) {
+      this.pos.x += svx;
+      this.pos.y += svy;
+      // Push raw numbers instead of Vector objects
+      this.hx.push(this.pos.x);
+      this.hy.push(this.pos.y);
+    }
+
     this.acc.mult(0); // Reset acceleration
 
+    // Keep history buffer small
+    while (this.hx.length > 12) {
+      this.hx.shift();
+      this.hy.shift();
+    }
+
     // Prevent stagnation - if particle is too slow, give it a nudge
-    if (this.vel.mag() < 0.1) {
+    if (speed < 0.1) {
       let randomForce = p5.Vector.random2D();
       randomForce.mult(0.5);
       this.vel.add(randomForce);
@@ -263,43 +307,37 @@ class Particle {
   }
 
   show() {
-    // Calculate color using current palette
-    let angle = this.vel.heading();
-    let speed = this.vel.mag();
+    let len = this.hx.length;
+    if (len < 2) return;
+
+    // Map smoothed curvature to color via log scale
+    let logK = log(1 + this.smoothK * curvatureScale);
 
     let palette = colorPalettes[currentPalette];
-    let [hue, sat, bright, alpha] = palette.getColor(angle, speed, this.hueOffset, frameCount);
+    let [hue, sat, bright, alpha] = palette.getColor(logK, this.speed, this.hueOffset);
 
-    // Draw trail line from previous position to current
     stroke(hue, sat, bright, alpha);
-    strokeWeight(strokeWeightValue);
-    line(this.prevPos.x, this.prevPos.y, this.pos.x, this.pos.y);
 
-    this.updatePrev();
-  }
-
-  updatePrev() {
-    this.prevPos.x = this.pos.x;
-    this.prevPos.y = this.pos.y;
+    // Draw line segments for new sub-steps
+    // With dense sub-stepped points (~1.5-2px apart), lines are visually smooth
+    // line() is far cheaper than curve() — no spline interpolation needed
+    let startI = max(1, len - this.stepsThisFrame);
+    for (let i = startI; i < len; i++) {
+      line(this.hx[i - 1], this.hy[i - 1], this.hx[i], this.hy[i]);
+    }
   }
 
   // Wrap around screen edges seamlessly
   edges() {
-    if (this.pos.x > width) {
-      this.pos.x = 0;
-      this.updatePrev();
-    }
-    if (this.pos.x < 0) {
-      this.pos.x = width;
-      this.updatePrev();
-    }
-    if (this.pos.y > height) {
-      this.pos.y = 0;
-      this.updatePrev();
-    }
-    if (this.pos.y < 0) {
-      this.pos.y = height;
-      this.updatePrev();
+    let wrapped = false;
+    if (this.pos.x > width) { this.pos.x = 0; wrapped = true; }
+    if (this.pos.x < 0) { this.pos.x = width; wrapped = true; }
+    if (this.pos.y > height) { this.pos.y = 0; wrapped = true; }
+    if (this.pos.y < 0) { this.pos.y = height; wrapped = true; }
+    // Clear history on wrap to avoid cross-screen artifacts
+    if (wrapped) {
+      this.hx.length = 0;
+      this.hy.length = 0;
     }
   }
 }
