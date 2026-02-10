@@ -2,415 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drift Flow Field - Interactive Fluid Visualization</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: black;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    }
-    canvas {
-      display: block;
-    }
-
-    /* Control Panel */
-    #control-panel {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 20px;
-      color: white;
-      min-width: 280px;
-      max-height: 90vh;
-      overflow-y: auto;
-      z-index: 1000;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    #control-panel.hidden {
-      opacity: 0;
-      transform: translateX(20px);
-      pointer-events: none;
-    }
-
-    h3 {
-      margin: 0 0 15px 0;
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .control-section {
-      margin-bottom: 20px;
-    }
-
-    .control-section:last-child {
-      margin-bottom: 0;
-    }
-
-    .section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.5);
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-    /* Sliders */
-    .slider-control {
-      margin-bottom: 16px;
-    }
-
-    .slider-control label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 6px;
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    .slider-value {
-      font-variant-numeric: tabular-nums;
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 12px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.1);
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: white;
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: white;
-      cursor: pointer;
-      border: none;
-      transition: transform 0.1s;
-    }
-
-    input[type="range"]::-moz-range-thumb:hover {
-      transform: scale(1.2);
-    }
-
-    /* Color Palettes */
-    .palette-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .palette-button {
-      padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .palette-button:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .palette-button.active {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
-      color: white;
-      font-weight: 600;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 10px 16px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
-      color: white;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    /* Toggle Button */
-    #toggle-controls {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: white;
-      font-size: 12px;
-      cursor: pointer;
-      z-index: 999;
-      transition: all 0.2s;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #toggle-controls.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    #toggle-controls:hover {
-      background: rgba(0, 0, 0, 0.95);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    /* Keyboard Shortcuts */
-    .shortcuts {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.4);
-      line-height: 1.6;
-    }
-
-    .shortcuts div {
-      margin-bottom: 4px;
-    }
-
-    .shortcut-key {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: monospace;
-      margin-right: 6px;
-      min-width: 20px;
-      text-align: center;
-    }
-
-    /* Scrollbar */
-    #control-panel::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    #control-panel::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    #control-panel::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-    }
-
-    #control-panel::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-  </style>
+  <title>Drift Flow Field: Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <button id="toggle-controls" onclick="togglePanel()">Show Controls</button>
-
-  <div id="control-panel">
-    <h3>Drift Flow Field</h3>
-
-    <!-- Color Palettes -->
-    <div class="control-section">
-      <div class="section-title">Color Palette</div>
-      <div class="palette-grid">
-        <button class="palette-button active" data-palette="bluePink">Blue-Pink</button>
-        <button class="palette-button" data-palette="violet">Violet</button>
-        <button class="palette-button" data-palette="cyanTeal">Cyan-Teal</button>
-        <button class="palette-button" data-palette="redOrange">Red-Orange</button>
-        <button class="palette-button" data-palette="grayscale">Grayscale</button>
-      </div>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Drift Flow Field</h1>
+      <p class="subtitle">Pattern, rhythm, and movement through curl noise and particle flow</p>
     </div>
+  </header>
 
-    <!-- Particle Settings -->
-    <div class="control-section">
-      <div class="section-title">Particles</div>
-
-      <div class="slider-control">
-        <label>
-          <span>Count</span>
-          <span class="slider-value" id="particleCount">3000</span>
-        </label>
-        <input type="range" id="particleCountSlider" min="500" max="8000" step="100" value="3000">
+  <main>
+    <!-- Live Sketch Embed -->
+    <section id="sketch">
+      <h2>Live Sketch</h2>
+      <div class="sketch-container">
+        <iframe src="sketch.html" title="Drift Flow Field - Interactive Visualization"></iframe>
       </div>
+      <p class="sketch-caption">Interactive flow field visualization. Use the control panel (top-right) to adjust parameters, or press <code>H</code> to toggle it.</p>
+    </section>
 
-      <div class="slider-control">
-        <label>
-          <span>Speed</span>
-          <span class="slider-value" id="particleSpeed">2.0</span>
-        </label>
-        <input type="range" id="particleSpeedSlider" min="0.5" max="5" step="0.1" value="2">
+    <!-- Concept -->
+    <section id="concept">
+      <h2>Concept</h2>
+      <p>
+        This sketch explores pattern, rhythm, and movement through a particle-based flow field visualization inspired by the macOS Drift screensaver. Thousands of particles follow an evolving curl noise vector field, leaving fading trails that reveal the invisible structure of the flow. Drifting vortex centers create localized swirling patterns, producing complex, non-linear movement across the entire canvas.
+      </p>
+      <p>
+        The visualization uses HSB color mode with color mapped to the <em>curvature</em> of each particle's path, meaning particles flowing in straight lines appear as a different hue than those caught in tight spirals. This creates a natural color variation that highlights the underlying flow structure without any manual intervention. Five color palettes are available to explore different moods and compositions from the same underlying motion.
+      </p>
+    </section>
+
+    <!-- Process -->
+    <section id="process">
+      <h2>Process</h2>
+
+      <h3>Initial Flow Field with Velocity-Based Color</h3>
+      <p>
+        The project started with a basic Perlin noise flow field where particle color was determined by velocity heading (the direction of travel). This produced a working visualization, but the color distribution felt arbitrary and didn't meaningfully relate to the visual structure of the flow. Particles also showed visible gaps and fragmentation at higher speeds, where they would jump multiple pixels per frame.
+      </p>
+      <figure class="single">
+        <img src="media/1.png" alt="Early flow field with velocity-heading-based colors and visible trail gaps">
+        <figcaption>Early iteration: velocity-heading color mapping with visible fragmentation at high speeds.</figcaption>
+      </figure>
+
+      <h3>Trail Fragmentation and Sparse Flow</h3>
+      <p>
+        Increasing trail length revealed the gap problem more clearly. Longer trails showed disconnected segments where fast-moving particles skipped over pixels between frames. The flow patterns were emerging, but the visual continuity was broken.
+      </p>
+      <figure class="single">
+        <img src="media/2.png" alt="Longer trails showing fragmented particle paths">
+        <figcaption>Longer trails exposed the gap problem, with visible breaks in fast-moving particle paths.</figcaption>
+      </figure>
+
+      <h3>Debugging the Vector Field</h3>
+      <p>
+        To better understand the flow structure, I built a debug visualization that rendered the raw vector field as directional arrows. This confirmed the curl noise was producing smooth, divergence-free flow and helped identify how vortex centers interact with the base noise field. A basic text-based controls panel was added at this stage.
+      </p>
+      <figure class="single">
+        <img src="media/3.png" alt="Debug view showing flow field vectors as colored arrows">
+        <figcaption>Vector field debug view showing the underlying curl noise flow structure.</figcaption>
+      </figure>
+
+      <h3>Curvature-Based Color and Sub-Stepping</h3>
+      <p>
+        Two major changes transformed the sketch. First, color mapping was switched from velocity heading to <em>instantaneous curvature</em>, making the color reflect how sharply each particle is turning rather than which direction it faces. Second, sub-stepping was introduced to break fast particle movement into smaller increments, eliminating trail gaps entirely. These changes, combined with the interactive control panel, produced the final visualization.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/4.png" alt="Final visualization with Blue-Pink palette showing dense flowing trails">
+          <figcaption>Blue-Pink palette: 8000 particles with curvature-based color and continuous trails.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/5.png" alt="Red-Orange palette with organic swirling patterns">
+          <figcaption>Red-Orange palette: high evolution speed creates organic, tendril-like forms.</figcaption>
+        </figure>
       </div>
+      <figure class="single">
+        <img src="media/6.png" alt="Violet palette with dense luminous trails">
+        <figcaption>Violet palette: 8000 particles with long trails and heavy line weight.</figcaption>
+      </figure>
+    </section>
 
-      <div class="slider-control">
-        <label>
-          <span>Trail Length</span>
-          <span class="slider-value" id="trailAlpha">5.0</span>
-        </label>
-        <input type="range" id="trailAlphaSlider" min="2" max="20" step="0.5" value="5">
-      </div>
+    <!-- Problem Write-Up -->
+    <section id="problem">
+      <h2>Problem: Ghosting and Trail Gaps at High Speeds</h2>
+      <p>
+        The most interesting problem I encountered was the afterimage and trail fragmentation that appeared when particles moved quickly. In a p5.js sketch running at 60fps, each particle's position updates once per frame. At high speeds, a particle might jump 4-6 pixels between frames, leaving visible gaps in its trail. Since trails are created by drawing lines between consecutive stored positions, these gaps manifested as broken, dotted paths rather than the smooth, continuous streams I was aiming for. The problem became more pronounced when cranking up the particle speed slider, effectively destroying the visual illusion of fluid flow.
+      </p>
+      <p>
+        The solution was to implement sub-stepping within each frame's position update. Instead of moving a particle its full velocity in one jump, I calculate how many intermediate steps are needed based on the current speed: <code>numSteps = max(1, ceil(speed / 2))</code>. The velocity is divided evenly across these steps, and each intermediate position is stored in the particle's trail history. This means a particle moving at speed 6 takes three sub-steps of 2 pixels each, with all three positions recorded for rendering. The result is that trails remain continuous and gap-free regardless of how fast particles move. This also required switching from storing p5.Vector objects to flat coordinate arrays (<code>hx[]</code>, <code>hy[]</code>) for performance, since sub-stepping multiplies the number of positions stored per frame, and the overhead of creating Vector objects at that scale caused noticeable lag at high particle counts.
+      </p>
+    </section>
 
-      <div class="slider-control">
-        <label>
-          <span>Line Weight</span>
-          <span class="slider-value" id="strokeWeight">1.5</span>
-        </label>
-        <input type="range" id="strokeWeightSlider" min="0.5" max="4" step="0.1" value="1.5">
-      </div>
-    </div>
-
-    <!-- Flow Field Settings -->
-    <div class="control-section">
-      <div class="section-title">Flow Field</div>
-
-      <div class="slider-control">
-        <label>
-          <span>Evolution Speed</span>
-          <span class="slider-value" id="evolutionSpeed">3.0</span>
-        </label>
-        <input type="range" id="evolutionSpeedSlider" min="0.5" max="10" step="0.1" value="3">
-      </div>
-
-      <div class="slider-control">
-        <label>
-          <span>Noise Detail</span>
-          <span class="slider-value" id="noiseDetail">0.08</span>
-        </label>
-        <input type="range" id="noiseDetailSlider" min="0.02" max="0.2" step="0.01" value="0.08">
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="control-section">
-      <div class="action-buttons">
-        <button class="btn" onclick="resetParticles()">Reset</button>
-        <button class="btn" onclick="togglePanel()">Hide</button>
-      </div>
-    </div>
-
-    <!-- Keyboard Shortcuts -->
-    <div class="control-section">
-      <div class="section-title">Shortcuts</div>
-      <div class="shortcuts">
-        <div><span class="shortcut-key">R</span>Reset particles</div>
-        <div><span class="shortcut-key">C</span>Cycle palettes</div>
-        <div><span class="shortcut-key">H</span>Toggle controls</div>
-      </div>
-    </div>
-  </div>
-
-  <script src="flow_field_sketch.js"></script>
-  <script>
-    // Initialize control panel interactivity
-    document.addEventListener('DOMContentLoaded', function() {
-      // Palette buttons
-      document.querySelectorAll('.palette-button').forEach(button => {
-        button.addEventListener('click', function() {
-          document.querySelectorAll('.palette-button').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          currentPalette = this.dataset.palette;
-        });
-      });
-
-      // Slider controls
-      document.getElementById('particleCountSlider').addEventListener('input', function(e) {
-        const value = parseInt(e.target.value);
-        numParticles = value;
-        adjustParticleCount(0); // Trigger particle adjustment
-      });
-
-      document.getElementById('particleSpeedSlider').addEventListener('input', function(e) {
-        particleSpeed = parseFloat(e.target.value);
-        updateControlValues();
-      });
-
-      document.getElementById('trailAlphaSlider').addEventListener('input', function(e) {
-        trailAlpha = parseFloat(e.target.value);
-        updateControlValues();
-      });
-
-      document.getElementById('strokeWeightSlider').addEventListener('input', function(e) {
-        strokeWeightValue = parseFloat(e.target.value);
-        updateControlValues();
-      });
-
-      document.getElementById('evolutionSpeedSlider').addEventListener('input', function(e) {
-        evolutionSpeed = parseFloat(e.target.value) / 1000;
-        updateControlValues();
-      });
-
-      document.getElementById('noiseDetailSlider').addEventListener('input', function(e) {
-        inc = parseFloat(e.target.value);
-        document.getElementById('noiseDetail').textContent = inc.toFixed(2);
-      });
-
-      // Keyboard shortcut for hiding controls
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'h' || e.key === 'H') {
-          togglePanel();
-        }
-      });
-    });
-
-    function togglePanel() {
-      const panel = document.getElementById('control-panel');
-      const toggle = document.getElementById('toggle-controls');
-
-      if (panel.classList.contains('hidden')) {
-        panel.classList.remove('hidden');
-        toggle.classList.remove('visible');
-      } else {
-        panel.classList.add('hidden');
-        toggle.classList.add('visible');
-      }
-    }
-  </script>
+    <footer class="site-footer">
+      <p>&copy; 2025 — Drift Flow Field Project</p>
+    </footer>
+  </main>
 </body>
 </html>

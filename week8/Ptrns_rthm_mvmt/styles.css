@@ -1,0 +1,259 @@
+/* Basic reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-page: #0e0a14;
+  --bg-card: #16111f;
+  --accent: #8b5cf6;
+  --accent-soft: #2d2240;
+  --text-main: #e8e0f0;
+  --text-muted: #9d8fba;
+  --border-subtle: #2a2038;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.4;
+  color: var(--text-main);
+  background: var(--bg-page);
+}
+
+/* Layout */
+.site-header {
+  background: linear-gradient(180deg, #1a0e2e, #2d1a4e);
+  color: #fff;
+  padding: 0.5rem 1rem 0.5rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 2.0rem;
+  letter-spacing: 0.04em;
+}
+
+.subtitle {
+  margin: 0.45rem 0 0;
+  font-size: 0.98rem;
+  opacity: 0.85;
+}
+
+main {
+  max-width: 960px;
+  margin: 1.75rem auto 3.5rem;
+  padding: 2.25rem 1.75rem 2.5rem;
+  background: var(--bg-card);
+  border-radius: 14px;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+}
+
+section {
+  margin-bottom: 2.75rem;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--accent);
+  color: #fff;
+}
+
+h3 {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  color: #c4b5fd;
+}
+
+p {
+  margin: 0.75rem 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+em {
+  font-style: italic;
+}
+
+/* Sketch embed */
+.sketch-container {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 450px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-subtle);
+}
+
+.sketch-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.sketch-caption {
+  margin-top: 0.75rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Code blocks */
+pre {
+  background: #1a1225;
+  color: #c4b5fd;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 1rem 0;
+  border: 1px solid var(--border-subtle);
+}
+
+code {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.88em;
+}
+
+p code {
+  background: var(--accent-soft);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #c4b5fd;
+}
+
+/* Images & figures */
+img {
+  max-width: 100%;
+  height: 300px;
+  display: block;
+  border-radius: 8px;
+}
+
+figure {
+  margin: 1.25rem 0;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+}
+
+figure.single img {
+  margin: 0 auto;
+}
+
+figure.single {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figcaption {
+  margin-top: 0.55rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  text-align: left;
+  width: 100%;
+}
+
+/* Grids */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.image-grid figure {
+  flex: 1 1 260px;
+}
+
+.image-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+.image-row figure {
+  flex: 0 1 280px;
+}
+
+/* Footer */
+.site-footer {
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Small screens */
+@media (max-width: 768px) {
+  .site-header h1 {
+    font-size: 1.65rem;
+  }
+
+  main {
+    margin: 1.25rem 0.75rem 2.5rem;
+    padding: 1.75rem 1.25rem 2rem;
+  }
+
+  .image-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .image-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sketch-container {
+    height: 50vh;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    padding-inline: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+}
