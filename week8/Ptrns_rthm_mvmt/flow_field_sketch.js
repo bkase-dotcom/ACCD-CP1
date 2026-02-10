@@ -14,7 +14,7 @@ let trailAlpha = 5; // Background fade (lower = longer trails)
 let particleSpeed = 2; // Max particle speed
 let evolutionSpeed = 0.003; // Flow field evolution rate
 let strokeWeightValue = 1.5; // Line thickness
-let currentPalette = 'original'; // Current color scheme
+let currentPalette = 'bluePink'; // Current color scheme
 let curvatureScale = 500; // Scale factor for curvature-to-color mapping
 
 // Vortex system for creating more swirling patterns
@@ -24,8 +24,8 @@ let numVortices = 4; // Number of vortex centers
 // Color Palettes - color mapped from instantaneous radius of curvature
 // logK range is approximately 0 (straight) to 4 (tight spiral)
 const colorPalettes = {
-  original: {
-    name: 'Original',
+  bluePink: {
+    name: 'Blue-Pink',
     getColor: (logK, speed, hueOffset) => {
       let hue = (map(logK, 0, 4, 200, 420) + hueOffset * 0.3) % 360;
       let sat = map(speed, 0, particleSpeed, 50, 100);
@@ -33,8 +33,8 @@ const colorPalettes = {
       return [hue, sat, bright, 40];
     }
   },
-  plasma: {
-    name: 'Plasma',
+  violet: {
+    name: 'Violet',
     getColor: (logK, speed, hueOffset) => {
       let hue = (map(logK, 0, 4, 260, 340) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 80, 100);
@@ -42,8 +42,8 @@ const colorPalettes = {
       return [hue, sat, bright, 50];
     }
   },
-  poolside: {
-    name: 'Poolside',
+  cyanTeal: {
+    name: 'Cyan-Teal',
     getColor: (logK, speed, hueOffset) => {
       let hue = (map(logK, 0, 4, 170, 230) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 60, 95);
@@ -51,8 +51,8 @@ const colorPalettes = {
       return [hue, sat, bright, 45];
     }
   },
-  sunset: {
-    name: 'Sunset',
+  redOrange: {
+    name: 'Red-Orange',
     getColor: (logK, speed, hueOffset) => {
       let hue = (map(logK, 0, 4, 0, 60) + hueOffset * 0.1) % 360;
       let sat = map(speed, 0, particleSpeed, 70, 100);
@@ -60,8 +60,8 @@ const colorPalettes = {
       return [hue, sat, bright, 45];
     }
   },
-  monochrome: {
-    name: 'Monochrome',
+  grayscale: {
+    name: 'Grayscale',
     getColor: (logK, speed, hueOffset) => {
       let hue = 0;
       let sat = 0;
@@ -387,7 +387,11 @@ function cyclePalette() {
   const currentIndex = paletteKeys.indexOf(currentPalette);
   const nextIndex = (currentIndex + 1) % paletteKeys.length;
   currentPalette = paletteKeys[nextIndex];
-  console.log('Palette:', colorPalettes[currentPalette].name);
+
+  // Sync active state on control panel buttons
+  document.querySelectorAll('.palette-button').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.palette-button[data-palette="${currentPalette}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
 }
 
 function adjustParticleCount(delta) {
