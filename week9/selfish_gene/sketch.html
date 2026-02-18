@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selfish Gene: Replicator Evolution</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #0a0a0f;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+
+    /* Control Panel */
+    #control-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(10, 10, 20, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px;
+      color: white;
+      min-width: 290px;
+      max-height: 92vh;
+      overflow-y: auto;
+      z-index: 1000;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    #control-panel.hidden {
+      opacity: 0;
+      transform: translateX(20px);
+      pointer-events: none;
+    }
+
+    #control-panel h3 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    #control-panel .panel-subtitle {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      margin: 0 0 16px 0;
+    }
+
+    .control-section {
+      margin-bottom: 18px;
+    }
+
+    .control-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    /* Simulation length buttons */
+    .length-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .length-button {
+      padding: 8px 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .length-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .length-button.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(139, 92, 246, 0.5);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Sliders */
+    .slider-control {
+      margin-bottom: 14px;
+    }
+
+    .slider-control label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .slider-value {
+      font-variant-numeric: tabular-nums;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: rgba(139, 92, 246, 0.45);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Toggle button */
+    #toggle-controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(10, 10, 20, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 999;
+      transition: all 0.2s;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #toggle-controls.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #toggle-controls:hover {
+      background: rgba(10, 10, 20, 0.95);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Winner display */
+    .winner-box {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.7);
+      display: none;
+    }
+
+    .winner-box.visible {
+      display: block;
+    }
+
+    .winner-box .winner-label {
+      font-weight: 600;
+      color: white;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .winner-stat {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .winner-stat span:last-child {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Shortcuts */
+    .shortcuts {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.35);
+      line-height: 1.7;
+    }
+
+    .shortcuts div {
+      margin-bottom: 2px;
+    }
+
+    .shortcut-key {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      margin-right: 5px;
+      min-width: 18px;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    /* Scrollbar */
+    #control-panel::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #control-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #control-panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <button id="toggle-controls" onclick="togglePanel()">Show Controls</button>
+
+  <div id="control-panel">
+    <h3>Replicator Evolution</h3>
+    <p class="panel-subtitle">Based on The Selfish Gene</p>
+
+    <!-- Simulation Length -->
+    <div class="control-section">
+      <div class="section-title">Simulation Length</div>
+      <div class="length-grid">
+        <button class="length-button" data-steps="100000">100K</button>
+        <button class="length-button active" data-steps="1000000">1M</button>
+        <button class="length-button" data-steps="10000000">10M</button>
+        <button class="length-button" data-steps="100000000">100M</button>
+      </div>
+    </div>
+
+    <!-- Original Replicator -->
+    <div class="control-section">
+      <div class="section-title">Original Replicator</div>
+
+      <div class="slider-control">
+        <label>
+          <span>Spawn Rate</span>
+          <span class="slider-value" id="spawnRateVal">1.0%</span>
+        </label>
+        <input type="range" id="spawnRateSlider" min="0.1" max="5" step="0.1" value="1">
+      </div>
+
+      <div class="slider-control">
+        <label>
+          <span>Death Rate</span>
+          <span class="slider-value" id="deathRateVal">2.0%</span>
+        </label>
+        <input type="range" id="deathRateSlider" min="0.1" max="10" step="0.1" value="2">
+      </div>
+
+      <div class="slider-control">
+        <label>
+          <span>Replication Rate</span>
+          <span class="slider-value" id="replicationRateVal">4.0%</span>
+        </label>
+        <input type="range" id="replicationRateSlider" min="0.1" max="15" step="0.1" value="4">
+      </div>
+
+      <div class="slider-control">
+        <label>
+          <span>Mutation Rate</span>
+          <span class="slider-value" id="mutationRateVal">4.0%</span>
+        </label>
+        <input type="range" id="mutationRateSlider" min="0" max="20" step="0.1" value="4">
+      </div>
+    </div>
+
+    <!-- Environment -->
+    <div class="control-section">
+      <div class="section-title">Environment</div>
+
+      <div class="slider-control">
+        <label>
+          <span>Carrying Capacity</span>
+          <span class="slider-value" id="capacityVal">1,000</span>
+        </label>
+        <input type="range" id="capacitySlider" min="100" max="5000" step="100" value="1000">
+      </div>
+
+      <div class="slider-control">
+        <label>
+          <span>Simulation Speed</span>
+          <span class="slider-value" id="speedVal">1x</span>
+        </label>
+        <input type="range" id="speedSlider" min="1" max="10" step="1" value="1">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="control-section">
+      <div class="action-buttons">
+        <button class="btn btn-primary" id="runBtn">Run</button>
+        <button class="btn" id="pauseBtn" disabled>Pause</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <!-- Winner Stats (shown on completion) -->
+    <div class="control-section">
+      <div id="winnerBox" class="winner-box">
+        <div class="winner-label">Dominant Species</div>
+        <div class="winner-stat"><span>Replication Rate</span><span id="winRepRate">-</span></div>
+        <div class="winner-stat"><span>Death Rate</span><span id="winDeathRate">-</span></div>
+        <div class="winner-stat"><span>Mutation Rate</span><span id="winMutRate">-</span></div>
+        <div class="winner-stat"><span>Population Share</span><span id="winShare">-</span></div>
+      </div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div class="control-section">
+      <div class="section-title">Shortcuts</div>
+      <div class="shortcuts">
+        <div><span class="shortcut-key">Space</span>Run / Pause</div>
+        <div><span class="shortcut-key">R</span>Reset</div>
+        <div><span class="shortcut-key">H</span>Toggle panel</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="simulation.js"></script>
+  <script src="sketch.js"></script>
+</body>
+</html>

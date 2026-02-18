@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selfish Gene: Replicator Evolution Simulation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#2d1f4e',
+        primaryTextColor: '#e4ddf0',
+        primaryBorderColor: '#8b5cf6',
+        lineColor: '#8f82aa',
+        secondaryColor: '#1e1635',
+        tertiaryColor: '#140e24',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '13px'
+      }
+    });
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Selfish Gene: Replicator Evolution</h1>
+      <p class="subtitle">Simulating natural selection, mutation, and genetic drift in p5.js</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Live Sketch -->
+    <section id="sketch">
+      <h2>Live Simulation</h2>
+      <div class="sketch-container">
+        <iframe src="sketch.html" title="Replicator Evolution Simulation"></iframe>
+      </div>
+      <p class="sketch-caption">Interactive replicator evolution simulation. Adjust parameters in the control panel (top-right), choose a simulation length, and press <code>Run</code>. Press <code>H</code> to toggle the control panel.</p>
+    </section>
+
+    <!-- Concept -->
+    <section id="concept">
+      <h2>Concept</h2>
+      <p>
+        This simulation models the core mechanism of evolution by natural selection, viewed through the lens of Richard Dawkins' <em>The Selfish Gene</em> framework as presented in the Veritasium video "The Most Controversial Idea in Biology." The central idea is that natural selection operates at the level of the <strong>gene</strong> (the replicator), not the individual organism or the species.
+      </p>
+      <p>
+        In the primordial void, simple molecules occasionally combine into structures capable of copying themselves: <strong>replicators</strong>. These replicators compete for limited building blocks. Through imperfect copying (mutation), new variants arise with slightly different properties. Variants that replicate faster, die less often, and produce more faithful copies tend to dominate the population over time. This is natural selection, emerging spontaneously from three simple ingredients: replication, variation, and competition for limited resources.
+      </p>
+
+      <div class="callout">
+        <strong>The gene is the unit of natural selection</strong> because it is long enough to independently influence a trait, yet short and stable enough to be faithfully copied across generations. Individuals and species don't typically make copies of themselves in the way genes do, so they aren't subject to selection in the same direct way.
+      </div>
+
+      <h3>What the Simulation Models</h3>
+      <p>
+        Each replicator in our simulation is governed by four probabilistic traits:
+      </p>
+      <ul>
+        <li><strong>Spawn Rate</strong> &mdash; the chance per timestep of a new original replicator forming spontaneously from raw building blocks. Only the original species can do this; mutations must arise from existing replicators.</li>
+        <li><strong>Death Rate</strong> &mdash; the chance per timestep of a replicator falling apart or being destroyed.</li>
+        <li><strong>Replication Rate</strong> &mdash; the base chance per timestep of copying itself, modulated by resource availability.</li>
+        <li><strong>Mutation Rate</strong> &mdash; the chance that any given copy comes out mutated, forming a new species with slightly different stats.</li>
+      </ul>
+      <p>
+        Resource pressure is modeled through a carrying capacity <code>C</code>. As the total population <code>N</code> approaches <code>C</code>, the effective replication rate drops toward zero:
+      </p>
+      <div class="formula">
+        effective_replication = replication_rate &times; max(0, 1 &minus; N / C)
+      </div>
+      <p>
+        This creates logistic growth and forces replicator species to compete. Over many timesteps, the simulation consistently produces the same result observed in the Veritasium video: <strong>winning species tend to have high replication rates, low death rates, and low mutation rates</strong>. But this isn't guaranteed &mdash; genetic drift can cause a less-fit species to dominate purely by chance, especially in small populations.
+      </p>
+    </section>
+
+    <!-- UML Diagram -->
+    <section id="uml">
+      <h2>System Architecture (UML Class Diagram)</h2>
+      <p>
+        The simulation is built using three core classes following the Object-Oriented Programming paradigm. The <code>Simulation</code> manages a single <code>Population</code>, which contains many <code>Replicator</code> instances. Replicators can produce copies of themselves, which may be mutations (new species) or faithful clones.
+      </p>
+      <div class="diagram-container">
+        <pre class="mermaid">
+classDiagram
+    class Replicator {
+        +Number id
+        +Number generation
+        +Number parentId
+        +Number spawnRate
+        +Number deathRate
+        +Number replicationRate
+        +Number mutationRate
+        +Number speciesId
+        +Object color
+        +Number age
+        +Boolean alive
+        +getEffectiveReplicationRate(totalPop, capacity) Number
+        +getFitness() Number
+        +tryDie() Boolean
+        +tryReplicate(totalPop, capacity, nextId, nextSpeciesId) Replicator
+        +perturbStat(value)$ Number
+        +randomColor()$ Object
+    }
+
+    class Population {
+        +Array~Replicator~ replicators
+        +Number nextId
+        +Number nextSpeciesId
+        +Number capacity
+        +Map speciesCounts
+        +Map speciesColors
+        +Map speciesStats
+        +Number totalBorn
+        +Number totalDied
+        +Number totalMutations
+        +size() Number
+        +add(replicator) void
+        +remove(index) void
+        +getSpeciesBreakdown() Array
+        +getTopSpecies(n) Array
+        +trySpawn(template) void
+    }
+
+    class Simulation {
+        +Population population
+        +Number timestep
+        +Number maxTimesteps
+        +Number stepsPerFrame
+        +Boolean running
+        +Boolean paused
+        +Boolean complete
+        +Array history
+        +Number historySampleInterval
+        +Object originalTemplate
+        +step() void
+        +tick() void
+        +recordSnapshot() void
+        +start() void
+        +pause() void
+        +resume() void
+        +reset(params) void
+        +getProgress() Number
+        +getStats() Object
+        +getWinnerStats() Object
+    }
+
+    Simulation "1" --> "1" Population : manages
+    Population "1" --> "*" Replicator : contains
+    Replicator --> Replicator : replicates / mutates
+        </pre>
+      </div>
+    </section>
+
+    <!-- Flowchart -->
+    <section id="flowchart">
+      <h2>Simulation Logic (Flowchart)</h2>
+      <p>
+        Each timestep follows a deterministic sequence: attempt spontaneous spawn, then iterate through all living replicators to check for death and replication. Dead replicators are removed, newborns are added, and a snapshot is recorded at regular intervals for the population graph.
+      </p>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TD
+    A["Start Timestep"] --> B{"Spontaneous spawn?\n(random < spawnRate)"}
+    B -- Yes --> C["Create original replicator\n(speciesId = 0)"]
+    B -- No --> D
+    C --> D["For each living replicator"]
+    D --> E{"Death check\n(random < deathRate)"}
+    E -- Dies --> F["Mark for removal\n(totalDied++)"]
+    E -- Survives --> G{"Replication check\n(random < effRate)"}
+    G -- Fails --> H["Next replicator"]
+    G -- Succeeds --> I{"Mutation check\n(random < mutationRate)"}
+    I -- No mutation --> J["Create clone\n(same speciesId, same stats)"]
+    I -- Mutation! --> K["Create mutant\n(new speciesId, perturbed stats)"]
+    J --> H
+    K --> H
+    F --> H
+    H --> L{"More replicators?"}
+    L -- Yes --> D
+    L -- No --> M["Remove all dead replicators"]
+    M --> N["Add all newborn replicators"]
+    N --> O{"Sample interval reached?"}
+    O -- Yes --> P["Record snapshot to history"]
+    O -- No --> Q{"timestep >= maxTimesteps?"}
+    P --> Q
+    Q -- No --> A
+    Q -- Yes --> R["Simulation Complete"]
+        </pre>
+      </div>
+    </section>
+
+    <!-- Process -->
+    <section id="process">
+      <h2>Process</h2>
+
+      <h3>Mathematical Model</h3>
+      <p>
+        The simulation is inspired by the simplified replicator model presented in the Veritasium video, which itself draws from the work of evolutionary biologists and the YouTube channel Primer. Each timestep, every replicator independently faces probabilistic death, replication, and mutation events. The key innovation is the <strong>resource factor</strong>: the term <code>(1 - N/C)</code> creates carrying-capacity-limited logistic growth, forcing species into competition. When the population fills the void, replication slows to a crawl, and only species with the best death/replication balance survive.
+      </p>
+      <p>
+        Default parameters match the Veritasium video: spawn rate 1%, death rate 2%, replication rate 4%, mutation rate 4%, carrying capacity 1,000. The simulation batches many timesteps per animation frame to keep wall-clock runtime manageable regardless of the chosen simulation length (100K to 100M steps).
+      </p>
+
+      <h3>Visual Design</h3>
+      <p>
+        The visualization has three components. The <strong>population graph</strong> is a stacked area chart showing how species populations rise and fall over time, with a total population line overlay and a carrying capacity reference. The <strong>stats bar</strong> shows real-time metrics and a progress bar. The <strong>void</strong> is a spatial representation of the replicator population as colored dots, where each dot's position is deterministically hashed from its ID to prevent visual jitter, with subtle Perlin noise drift for an organic feel.
+      </p>
+
+      <h3>User Controls</h3>
+      <p>
+        The control panel allows direct manipulation of all simulation parameters before starting a run. The user chooses a simulation length (100K to 100M timesteps), sets the original replicator's spawn, death, replication, and mutation rates, and adjusts the carrying capacity. A speed multiplier accelerates the simulation in real time. Carrying capacity and speed can be changed while the simulation is running; other parameters define the initial conditions.
+      </p>
+
+      <h3>Emergent Properties</h3>
+      <p>
+        Several behaviors emerge from the simple rules without being explicitly coded:
+      </p>
+      <ul>
+        <li><strong>Natural selection</strong> &mdash; Species with higher replication and lower death rates consistently dominate, even though no rule says "better replicators should win." It's a statistical consequence of differential survival.</li>
+        <li><strong>Mutation rate optimization</strong> &mdash; High mutation rates produce diverse offspring but most are worse than the parent. Low mutation rates produce faithful copies but can't adapt. Over long runs, winning species tend to converge toward lower mutation rates.</li>
+        <li><strong>Genetic drift</strong> &mdash; At low carrying capacities (100-200), random sampling noise can cause fitter species to go extinct while less-fit ones survive. This is visible as unexpected "winners" in the final stats.</li>
+        <li><strong>Population oscillations</strong> &mdash; The logistic growth constraint creates boom-bust cycles: low population allows rapid growth, population approaches capacity, growth stalls, deaths exceed births, population crashes, cycle repeats.</li>
+        <li><strong>Extinction events</strong> &mdash; A highly fit mutant can rapidly displace all other species, visible as a sudden color shift in the void and a sharp transition in the stacked graph.</li>
+        <li><strong>Coexistence</strong> &mdash; Multiple species sometimes reach similar effective fitness and coexist stably, visible as a steady mix of colors in the void.</li>
+      </ul>
+    </section>
+
+    <!-- Intent -->
+    <section id="intent">
+      <h2>Intent</h2>
+      <p>
+        The goal of this project is to make the abstract concept of gene-level natural selection tangible and interactive. By letting users tune the parameters and observe the outcomes across different timescales, the simulation demonstrates that complex evolutionary dynamics &mdash; competition, adaptation, drift, extinction &mdash; all emerge from remarkably simple probabilistic rules. The user doesn't need to understand differential equations or population genetics; they just adjust sliders and watch evolution happen.
+      </p>
+      <p>
+        The key insight from the Veritasium video, and from Dawkins' <em>The Selfish Gene</em>, is that genes are the fundamental unit of natural selection. This simulation makes that concrete: the "individuals" on screen are the replicators themselves (analogous to genes), and the user can directly observe how their properties determine which lineages survive. The organisms we see in nature &mdash; bacteria, plants, animals, humans &mdash; are, in this framework, elaborate survival machines built by genes to propagate themselves.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <p>&copy; 2025 &mdash; Selfish Gene: Replicator Evolution Simulation</p>
+    </footer>
+  </main>
+</body>
+</html>
