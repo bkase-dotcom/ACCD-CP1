@@ -259,6 +259,8 @@ function drawStatsBar(sim, sx, sy, sw, sh) {
 
 // ── Void Visualization ──
 
+const VOID_TOP_N = 5;
+
 function drawVoid(sim, vx, vy, vw, vh) {
   // Background
   noStroke();
@@ -274,9 +276,16 @@ function drawVoid(sim, vx, vy, vw, vh) {
     return;
   }
 
+  // Identify top species and assign each a distinct shape
+  let topSpecies = pop.getTopSpecies(VOID_TOP_N);
+  let shapeMap = new Map();
+  for (let i = 0; i < topSpecies.length; i++) {
+    shapeMap.set(topSpecies[i].speciesId, i);
+  }
+
   let maxDots = 1500;
-  let dotSize = map(pop.size(), 1, pop.capacity, 7, 2.5);
-  dotSize = constrain(dotSize, 1.5, 8);
+  let dotSize = map(pop.size(), 1, pop.capacity, 8, 3.5);
+  dotSize = constrain(dotSize, 2.5, 9);
 
   let sampleRate = Math.min(1, maxDots / pop.size());
 
@@ -296,26 +305,34 @@ function drawVoid(sim, vx, vy, vw, vh) {
     let px = vx + hx + nx;
     let py = vy + hy + ny;
 
-    fill(r.color.h, r.color.s, r.color.b, 70);
-    circle(px, py, dotSize);
+    let shapeIdx = shapeMap.get(r.speciesId);
+    if (shapeIdx !== undefined) {
+      // Top species: distinct shape, full color
+      fill(r.color.h, r.color.s, r.color.b, 75);
+      drawReplicatorShape(shapeIdx, px, py, dotSize);
+    } else {
+      // Minor species: tiny faded dot
+      fill(r.color.h, r.color.s * 0.5, r.color.b * 0.4, 20);
+      circle(px, py, dotSize * 0.35);
+    }
   }
 
-  // Species legend
-  let topSpecies = pop.getTopSpecies(5);
+  // Species legend with matching shapes
   let legendX = vx + 12;
   let legendY = vy + 14;
   textSize(10);
   for (let i = 0; i < topSpecies.length; i++) {
     let sp = topSpecies[i];
-    let ly = legendY + i * 16;
+    let ly = legendY + i * 18;
 
     fill(sp.color.h, sp.color.s, sp.color.b, 90);
-    circle(legendX, ly + 4, 7);
+    noStroke();
+    drawReplicatorShape(i, legendX + 1, ly + 4, 9);
 
     fill(0, 0, 100, 50);
     textAlign(LEFT, TOP);
     let pct = (sp.count / pop.size() * 100).toFixed(1);
-    text('Sp.' + sp.speciesId + ': ' + sp.count + ' (' + pct + '%)', legendX + 10, ly - 1);
+    text('Sp.' + sp.speciesId + ': ' + sp.count + ' (' + pct + '%)', legendX + 12, ly - 1);
   }
 
   // Title
@@ -323,6 +340,43 @@ function drawVoid(sim, vx, vy, vw, vh) {
   textSize(11);
   textAlign(RIGHT, TOP);
   text('The Void', vx + vw - 12, vy + 10);
+}
+
+// ── Shape Drawing ──
+// 0: circle, 1: triangle, 2: square, 3: diamond, 4: hexagon
+
+function drawReplicatorShape(shapeIdx, x, y, size) {
+  let r = size / 2;
+  switch (shapeIdx) {
+    case 0: // circle
+      ellipse(x, y, size, size);
+      break;
+    case 1: // triangle (equilateral, pointing up)
+      triangle(
+        x, y - r,
+        x - r * 0.866, y + r * 0.5,
+        x + r * 0.866, y + r * 0.5
+      );
+      break;
+    case 2: // square
+      rectMode(CENTER);
+      rect(x, y, size * 0.78, size * 0.78);
+      rectMode(CORNER);
+      break;
+    case 3: // diamond
+      quad(x, y - r, x + r * 0.65, y, x, y + r, x - r * 0.65, y);
+      break;
+    case 4: // hexagon
+      beginShape();
+      for (let a = 0; a < 6; a++) {
+        let angle = TWO_PI / 6 * a - HALF_PI;
+        vertex(x + cos(angle) * r * 0.85, y + sin(angle) * r * 0.85);
+      }
+      endShape(CLOSE);
+      break;
+    default:
+      ellipse(x, y, size * 0.4, size * 0.4);
+  }
 }
 
 // ── Utility ──
