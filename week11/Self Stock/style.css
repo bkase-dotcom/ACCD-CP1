@@ -1,0 +1,11 @@
+body {
+    margin: 0;
+}
+
+#colorStage {
+    height: 400px;
+}
+
+#webbImage {
+    width: 80%;
+}

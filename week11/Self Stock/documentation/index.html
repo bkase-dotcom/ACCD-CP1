@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Self Stock: Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Self Stock</h1>
+      <p class="subtitle">ML-powered inventory tracking through real-world object recognition</p>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Live Prototype Link -->
+    <section id="prototype">
+      <h2>Live Prototype</h2>
+      <p>
+        <a href="../prototype/sketch.html" class="prototype-link" target="_blank">
+          Open Self Stock Prototype &rarr;
+        </a>
+      </p>
+      <p>
+        The prototype requires camera access and runs COCO-SSD + a custom-trained classifier
+        entirely in the browser. Best experienced on a laptop with a webcam and a few household
+        objects nearby.
+      </p>
+    </section>
+
+    <!-- Concept -->
+    <section id="concept">
+      <h2>Concept</h2>
+      <p>
+        Self Stock is a browser-based smart inventory system that uses machine learning to
+        recognise, classify, and count physical products in real time using just a webcam.
+        The user trains the system on their own products through a guided onboarding flow &mdash;
+        no pre-existing dataset, no server, no manual entry. The interface then updates stock
+        counts automatically as products enter and leave the camera's field of view.
+      </p>
+      <p>
+        The core question driving the project: <em>can a lightweight, entirely client-side ML
+        pipeline produce a reliable-enough signal to support a real inventory management
+        workflow?</em> The answer, as the prototype demonstrates, is "sometimes, under
+        controlled conditions" &mdash; and the gap between that and "reliably, at scale" is where
+        the most interesting design and engineering problems live.
+      </p>
+    </section>
+
+    <!-- Technical Architecture -->
+    <section id="architecture">
+      <h2>Technical Architecture</h2>
+      <p>
+        The system uses a three-layer sequential pipeline, running entirely client-side on
+        TensorFlow.js 3.x. Each layer addresses a distinct question, and each has its own
+        failure modes:
+      </p>
+
+      <h3>Layer 1 &mdash; Detection (COCO-SSD)</h3>
+      <p>
+        <code>@tensorflow-models/coco-ssd@2.2.3</code> runs on the full camera frame every
+        few render cycles using the <code>lite_mobilenet_v2</code> base. It returns bounding
+        boxes around detected objects. This handles the <em>"how many things and where?"</em>
+        question. COCO-SSD only recognises its 80 built-in categories (bottle, cup, book,
+        phone, remote, etc.), so demo products must visually resemble one of those categories.
+        If COCO-SSD doesn't fire, the rest of the pipeline doesn't run &mdash; this is the most
+        fragile layer.
+      </p>
+
+      <h3>Layer 2 &mdash; Classification (Teachable Machine)</h3>
+      <p>
+        For each bounding box returned by COCO-SSD, the region is cropped and resized to
+        224 &times; 224, then classified by a user-trained model built with Google's
+        <code>@teachablemachine/image@0.8.5</code> library. This handles the
+        <em>"which product is this?"</em> question. The classifier is trained in-browser during
+        onboarding using transfer learning on MobileNet v2 (&alpha; = 0.35). Training samples
+        are buffered locally as <code>ImageData</code> objects and fed to the model in a single
+        batch at training time &mdash; a design choice driven by a critical bug discovered during
+        development (more on that in the iteration story below).
+      </p>
+
+      <h3>Layer 3 &mdash; Tracking (Custom Centroid Tracker)</h3>
+      <p>
+        Once an object is confidently classified, it's assigned a persistent tracking ID via
+        a centroid-matching algorithm. The tracker compares each frame's centroids against
+        previous centroids to determine: <em>same object</em> (distance below threshold),
+        <em>new object</em> (no nearby previous centroid &rarr; stock increments), or <em>exited
+        object</em> (no match for ~15 frames &rarr; stock decrements).
+      </p>
+      <p>
+        Known limitation: objects that touch or overlap may merge into a single COCO-SSD
+        detection. The demo requires spacing objects apart.
+      </p>
+    </section>
+
+    <!-- Plan A / B / C -->
+    <section id="plans">
+      <h2>Plan A / B / C</h2>
+
+      <h3>Plan A &mdash; Full Pipeline (Implemented)</h3>
+      <p>
+        In-browser Teachable Machine training + COCO-SSD detection + per-crop classification
+        + centroid tracking with persistent IDs. This is the version the prototype implements.
+      </p>
+
+      <h3>Plan B &mdash; Simplified Counting</h3>
+      <p>
+        Drop the centroid tracker; use debounce logic instead. An object must fully leave the
+        frame before it can be counted again. Sequential scan rather than simultaneous
+        multi-object tracking. This removes the most complex custom code and still demonstrates
+        detection + classification.
+      </p>
+
+      <h3>Plan C &mdash; Manual Trigger</h3>
+      <p>
+        Drop COCO-SSD entirely. The Teachable Machine classifier runs on the whole frame.
+        A manual button press triggers a stock event. No automatic counting &mdash; the user
+        explicitly tells the system "I'm adding/removing this product." This is the guaranteed
+        fallback: if nothing else works, a trained classifier + a button always will.
+      </p>
+    </section>
+
+    <!-- Iteration Story -->
+    <section id="process">
+      <h2>Process &amp; Iteration</h2>
+
+      <p>
+        The most important part of this project wasn't the final working state &mdash; it was
+        the sequence of failures that shaped the architecture. What follows is a chronological
+        account of the development process, documented through screenshots taken during the
+        session.
+      </p>
+
+      <!-- Phase 1 -->
+      <h3>Phase 1: Initial Implementation with ml5.js</h3>
+      <p>
+        The first version of the pipeline used <code>ml5.js</code> as a high-level wrapper
+        around both COCO-SSD (for detection) and MobileNet's feature extractor (for
+        classification). The onboarding flow worked: users could name a product, capture
+        training samples, and train a classifier. Single-product recognition came online
+        quickly.
+      </p>
+      <figure class="single">
+        <img src="media/01-product-added-modal.png"
+             alt="Product Added modal showing AirPods successfully added to inventory">
+        <figcaption>The onboarding flow successfully adds the first product (AirPods) to inventory.</figcaption>
+      </figure>
+      <figure class="single">
+        <img src="media/02-capture-ui-second-product.png"
+             alt="Capture UI ready to collect training samples for iPhone 17 Pro Max">
+        <figcaption>Beginning to add a second product (iPhone 17 Pro Max). The capture UI shows 0/15 samples collected.</figcaption>
+      </figure>
+
+      <!-- Phase 2 -->
+      <h3>Phase 2: The Misidentification Problem</h3>
+      <p>
+        With two products trained, the system immediately revealed a critical limitation.
+        Both the AirPods box and the iPhone box were being classified as "Air Pods" at
+        100% confidence. The ml5 feature extractor wasn't learning meaningful visual
+        distinctions between the two similar white product boxes. Even worse, an empty
+        hand held up to the camera was classified as "Air Pods" at 97% confidence &mdash;
+        the model had learned "anything vaguely hand-shaped or white-boxish in front of
+        the camera" rather than the actual product features.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/03-misidentification-both-airpods.png"
+               alt="Both products labeled as Air Pods 100% — misidentification">
+          <figcaption>Both the AirPods box and iPhone box classified as "Air Pods" at 100%.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/04-hand-false-positive.png"
+               alt="Empty hand classified as Air Pods at 97%">
+          <figcaption>An empty hand classified as "Air Pods" at 97% confidence.</figcaption>
+        </figure>
+      </div>
+      <p>
+        These weren't edge cases &mdash; they were fundamental. The classifier had no
+        meaningful background class to compare against, and ml5's feature extractor wasn't
+        producing embeddings distinct enough to separate visually similar products. This
+        motivated a complete replacement of the classification layer.
+      </p>
+
+      <!-- Phase 3 -->
+      <h3>Phase 3: Single Product Success, Multi-Product Failure</h3>
+      <p>
+        Interestingly, single-product tracking worked well. With only AirPods trained,
+        the system reliably detected and labeled the product at 100% confidence with
+        persistent tracker IDs. The three-layer pipeline concept was sound &mdash; the
+        problem was specifically in the classification model's ability to distinguish
+        between multiple products.
+      </p>
+      <figure class="single">
+        <img src="media/05-single-product-working.png"
+             alt="AirPods correctly recognized at 100% confidence with tracker ID #27">
+        <figcaption>Single-product tracking working correctly: AirPods at 100% with persistent tracker ID.</figcaption>
+      </figure>
+      <figure class="single">
+        <img src="media/06-two-products-misidentified.png"
+             alt="Both products in frame but both labeled as Air Pods 100%">
+        <figcaption>With two products in frame, both are still labeled "Air Pods" &mdash; the classifier can't distinguish them.</figcaption>
+      </figure>
+
+      <!-- Phase 4 -->
+      <h3>Phase 4: Switching to Teachable Machine</h3>
+      <p>
+        The fix required replacing ml5's feature extractor with Google's Teachable Machine
+        library (<code>@teachablemachine/image</code>), which provides a more robust
+        transfer-learning pipeline. This also meant replacing ml5's COCO-SSD wrapper with
+        the native <code>@tensorflow-models/coco-ssd</code> package to avoid TensorFlow.js
+        version conflicts (ml5 bundled TF.js 1.x, but Teachable Machine requires TF.js 3.x).
+      </p>
+      <p>
+        The migration immediately broke the sample capture pipeline. The recording button
+        showed "Recording..." but zero samples were being captured. The root cause: the
+        TF.js version conflict between ml5 (v1) and the new libraries (v3) meant the global
+        <code>tf</code> object was being overwritten, causing silent failures in the detection
+        layer.
+      </p>
+      <figure class="single">
+        <img src="media/07-zero-samples-bug.png"
+             alt="Recording active but 0 samples captured due to TF.js version conflict">
+        <figcaption>After switching to Teachable Machine: recording appears active but captures 0 samples &mdash; a TF.js version conflict.</figcaption>
+      </figure>
+
+      <!-- Phase 5 -->
+      <h3>Phase 5: The Cascade of Training Errors</h3>
+      <p>
+        After resolving the version conflict by removing ml5 entirely, a cascade of training
+        errors followed. Each fix revealed the next layer of incompatibility between the old
+        ml5-based code and the new Teachable Machine API.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/08-training-failed-units.png"
+               alt="Training failed: Expected units to be a positive integer, but got undefined">
+          <figcaption>Error 1: Missing <code>denseUnits</code> parameter in the Teachable Machine training config.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/09-training-failed-data.png"
+               alt="Training failed: Cannot read properties of undefined (reading 'data')">
+          <figcaption>Error 2: Using <code>setLabel()</code> (singular) instead of <code>setLabels()</code> (plural) &mdash; the dataset arrays weren't being initialized.</figcaption>
+        </figure>
+      </div>
+      <p>
+        These errors were fixed one at a time: adding the <code>denseUnits: 100</code> parameter,
+        switching from <code>setLabel(index, name)</code> to <code>setLabels(array)</code>,
+        and adjusting the training callback format. Each fix was small, but finding the right
+        API surface required careful reading of the Teachable Machine source code &mdash; the
+        documentation is sparse.
+      </p>
+
+      <!-- Phase 6 -->
+      <h3>Phase 6: Training Succeeds, but Tracking Shows Zero</h3>
+      <p>
+        The training pipeline finally completed without errors, but live tracking showed
+        "0 in view" for all products. A diagnostic status bar was added to the UI to expose
+        the pipeline's internal state, which revealed two problems layered on top of each other.
+      </p>
+      <figure class="single">
+        <img src="media/10-tracking-zero-in-view.png"
+             alt="Tracking active but showing 0 in view despite product in frame">
+        <figcaption>Training completes, but tracking shows 0 in view despite the product being clearly visible.</figcaption>
+      </figure>
+      <figure class="single">
+        <img src="media/11-person-filter-blocking.png"
+             alt="Status bar showing COCO sees 1 detection, all person/hand">
+        <figcaption>The diagnostic status bar reveals the cause: "COCO sees 1 det(s), all person/hand (1)" &mdash; a person filter was blocking the only detection.</figcaption>
+      </figure>
+      <p>
+        The first problem was a person-class filter that was discarding any COCO-SSD detection
+        labeled "person." Since the user was holding the product in their hand, COCO-SSD often
+        returned a single bounding box encompassing both the hand and the product, labeled
+        "person." The filter discarded it, and the rest of the pipeline never ran.
+      </p>
+      <p>
+        The second, deeper problem was in the Teachable Machine API itself. The
+        <code>setLabels()</code> method reinitialises the model's internal dataset arrays. The
+        original code called <code>setLabels()</code> once for the product class during capture,
+        then again when adding the background class before training. The second call wiped all
+        previously stored product training data. The model was being trained on 0 product samples
+        and 15 background samples &mdash; so everything was classified as background, producing
+        "0 in view."
+      </p>
+      <p>
+        This was the critical architectural insight that shaped the final design: training
+        samples must be <strong>buffered locally</strong> (as raw <code>ImageData</code>
+        objects) and only fed to the Teachable Machine model in a single batch at training
+        time, after a single <code>setLabels()</code> call. This buffered-samples architecture
+        became the backbone of the final classification layer.
+      </p>
+
+      <!-- Phase 7 -->
+      <h3>Phase 7: Resolution</h3>
+      <p>
+        With the buffered-samples architecture in place, the person filter removed, and
+        COCO-aware confidence gating added (higher threshold for "person" detections to
+        reduce hand false positives, lower threshold for objects), the system finally
+        differentiated both products reliably.
+      </p>
+      <figure class="single">
+        <img src="media/12-final-both-products-working.png"
+             alt="Both AirPods and iPhone correctly identified with separate bounding boxes and confidence scores">
+        <figcaption>The final working state: AirPods at 95% and iPhone at 100%, correctly differentiated with persistent tracker IDs and separate bounding boxes.</figcaption>
+      </figure>
+      <p>
+        One additional fix was required along the way: adding a second product class caused
+        a tensor shape mismatch (<code>[16,2] vs [16,3]</code>) because the old model's dense
+        layer was sized for 2 classes. The solution was to create a fresh Teachable Machine
+        model at the start of each training run, ensuring the output layer always matches the
+        current number of classes.
+      </p>
+    </section>
+
+    <!-- What Didn't Work / Limitations -->
+    <section id="limitations">
+      <h2>What Didn't Work &amp; Known Limitations</h2>
+
+      <h3>COCO-SSD Vocabulary as a Gatekeeper</h3>
+      <p>
+        The biggest constraint is that COCO-SSD acts as a hard gate: if it doesn't detect an
+        object, the rest of the pipeline never sees it. Many real products (cereal boxes, cans,
+        bags) don't closely resemble any of COCO-SSD's 80 categories. This means the demo is
+        essentially limited to products that look like something in COCO-SSD's vocabulary &mdash;
+        the Apple product boxes work because they're detected as "cell phone," "remote," or
+        similar.
+      </p>
+
+      <h3>Stock Counter Accuracy</h3>
+      <p>
+        The centroid tracker overcounts when COCO-SSD produces multiple overlapping bounding
+        boxes for the same object (common with hands holding products), and undercounts when
+        objects move too quickly for the tracker's distance threshold. The grace period before
+        an exit event (15 frames) means removed objects linger in the count briefly. This is
+        the most visible remaining limitation &mdash; the system can tell you <em>what</em>
+        is in frame accurately, but <em>how many</em> remains unreliable.
+      </p>
+
+      <h3>Dual-Model Latency</h3>
+      <p>
+        Running COCO-SSD and Teachable Machine classification sequentially on every detection
+        creates visible lag, especially with multiple objects. The pipeline only runs every
+        few frames to compensate, but this means fast movements can outpace the tracker.
+      </p>
+
+      <h3>Training Quality Variance</h3>
+      <p>
+        The in-browser transfer learning is sensitive to training conditions. If the user
+        captures all samples from the same angle, or with inconsistent lighting, classification
+        accuracy drops. The "hold to record" capture mode with COCO-SSD auto-cropping helps
+        ensure training samples match what the tracker sees at runtime, but there's no guidance
+        within the current UI about capture diversity &mdash; a future iteration could add
+        orientation prompts or sample quality scoring.
+      </p>
+
+      <h3>Background Class Design</h3>
+      <p>
+        Teaching the model what <em>isn't</em> a product turned out to be as important as
+        teaching it what is. The final version captures "person" crops from COCO-SSD as
+        background training data (so hands aren't classified as products), plus random scene
+        crops and full-frame captures. This works, but is a brittle heuristic &mdash; if the
+        environment changes significantly between training and tracking, false positives return.
+      </p>
+    </section>
+
+    <!-- Reflection -->
+    <section id="reflection">
+      <h2>Reflection</h2>
+      <p>
+        The gap between "this works in a demo" and "this works reliably" is where the most
+        valuable learning happened. The technology can do something genuinely impressive &mdash;
+        train a classifier in-browser in under 30 seconds and use it for real-time object
+        recognition &mdash; but the fragility of the pipeline means the demo must be carefully
+        set up. The objects need to be spaced apart, the products need to resemble COCO-SSD
+        categories, the lighting needs to be consistent, and the user needs to move slowly
+        enough for the tracker to keep up.
+      </p>
+      <p>
+        The most technically interesting discovery was how the Teachable Machine API manages
+        its internal state. The <code>setLabels()</code> bug &mdash; where calling it twice
+        silently wiped all training data &mdash; took the longest to diagnose and had the
+        most architectural consequences. It forced a move from "feed samples to the model
+        as they're captured" to "buffer everything locally, then feed in one batch." That
+        pattern turned out to be more robust anyway, since it also solved the shape-mismatch
+        problem when adding new product classes.
+      </p>
+      <p>
+        This is exactly the kind of tension that makes the project interesting from a design
+        perspective: the system can't be trusted to work perfectly, so the interface needs to
+        communicate its uncertainty, guide the user toward conditions where it succeeds, and
+        fail gracefully when it doesn't. That's a harder design problem than making the ML
+        work in the first place.
+      </p>
+    </section>
+
+    <!-- Tech Stack -->
+    <section id="stack">
+      <h2>Technology Stack</h2>
+      <p>
+        Everything runs client-side in the browser. No server, no API keys, no data leaves
+        the device.
+      </p>
+      <p>
+        <strong>Runtime:</strong> TensorFlow.js 3.21.0 &mdash;
+        <strong>Detection:</strong> @tensorflow-models/coco-ssd 2.2.3 (lite_mobilenet_v2) &mdash;
+        <strong>Classification:</strong> @teachablemachine/image 0.8.5 (MobileNet v2, &alpha; 0.35) &mdash;
+        <strong>Camera &amp; Rendering:</strong> p5.js 1.9.4 (instance mode) &mdash;
+        <strong>Tracking:</strong> Custom centroid tracker (greedy closest-pair matching)
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <p>&copy; 2026 &mdash; Self Stock Project &mdash; Benjamin Kase</p>
+    </footer>
+  </main>
+</body>
+</html>

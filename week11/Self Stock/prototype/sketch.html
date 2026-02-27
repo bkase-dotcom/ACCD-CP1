@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self Stock — Smart Inventory Tracker</title>
+  <link rel="stylesheet" href="sketch.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="header">
+    <div class="logo-container">
+      <h1>Self Stock</h1>
+      <span class="tagline">ML-Powered Inventory</span>
+    </div>
+    <div class="header-right">
+      <button id="add-product-btn" class="btn btn-accent hidden">+ Add Product</button>
+      <span id="status-bar" class="status-bar">Loading…</span>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN  — camera (left)  +  inventory (right)
+       ============================================================ -->
+  <main>
+    <!-- Camera panel -->
+    <section class="camera-panel">
+      <div class="camera-feed-wrapper">
+        <div id="camera-feed" class="camera-feed">
+          <!-- p5 canvas + hidden <video> injected here by sketch.js -->
+        </div>
+        <div id="capture-flash" class="capture-flash"></div>
+      </div>
+
+      <!-- Capture controls (visible during training capture phase) -->
+      <div id="capture-ui" class="capture-ui hidden">
+        <div class="capture-header">
+          <span>Capturing: <strong id="capture-product-name"></strong></span>
+          <span><span id="capture-count">0</span> samples</span>
+        </div>
+        <div class="capture-progress-track">
+          <div id="capture-progress" class="capture-progress-fill"></div>
+        </div>
+        <p class="capture-hint">
+          Hold down the button below while slowly rotating the product in front
+          of the camera. COCO-SSD auto-detects and crops the object each frame,
+          so training samples match exactly what the tracker sees at runtime.
+          Aim for different angles, distances, and orientations.
+        </p>
+        <div class="capture-actions">
+          <button id="record-btn" class="btn btn-record">
+            <span class="record-dot"></span>
+            <span id="record-label">Hold to Record</span>
+          </button>
+          <button id="train-btn" class="btn btn-primary"
+                  disabled onclick="transition(AppState.ONBOARDING_TRAIN)">
+            Train Model
+          </button>
+        </div>
+        <div id="capture-fps" class="capture-fps"></div>
+      </div>
+
+      <!-- Thumbnail capture UI (visible after training completes) -->
+      <div id="thumbnail-ui" class="thumbnail-ui hidden">
+        <div class="thumb-header">
+          <span>Product Photo: <strong id="thumb-product-name"></strong></span>
+        </div>
+
+        <div id="thumb-prompt" class="thumb-prompt">
+          <p>
+            Place <strong id="thumb-product-name-2"></strong> on a flat surface
+            in front of the camera with good lighting and a clean background.
+            Set the timer, then click capture.
+          </p>
+          <div class="thumb-timer-row">
+            <label for="thumb-timer-slider">Timer:</label>
+            <input type="range" id="thumb-timer-slider" min="3" max="10" step="1" value="3"
+                   list="timer-ticks">
+            <datalist id="timer-ticks">
+              <option value="3"></option>
+              <option value="5"></option>
+              <option value="10"></option>
+            </datalist>
+            <span id="thumb-timer-label" class="thumb-timer-value">3s</span>
+          </div>
+          <div class="thumb-actions">
+            <button id="thumb-capture-btn" class="btn btn-accent">Capture Photo</button>
+          </div>
+          <div id="thumb-countdown-display" class="thumb-countdown"></div>
+        </div>
+
+        <div id="thumb-preview" class="thumb-preview hidden">
+          <img id="thumb-preview-img" alt="Product thumbnail preview">
+          <div class="thumb-preview-actions">
+            <button id="thumb-retake-btn" class="btn btn-secondary">Retake</button>
+            <button id="thumb-use-btn" class="btn btn-primary">Use This Photo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inventory panel -->
+    <section class="inventory-panel">
+      <div id="shelf-container" class="shelf-view">
+        <div class="shelf-row">
+          <!-- product cards injected here dynamically -->
+        </div>
+      </div>
+
+      <div id="detail-panel" class="detail-panel hidden">
+        <div class="detail-thumb">
+          <img id="detail-image" alt="Product thumbnail">
+        </div>
+        <div class="detail-info">
+          <h3 id="detail-name">—</h3>
+          <p class="detail-stock-line">
+            In view: <strong id="detail-stock">0</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       ONBOARDING MODAL
+       ============================================================ -->
+  <div id="onboarding-modal" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+      <div id="modal-actions" class="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <!-- TensorFlow.js 3.x — shared runtime for COCO-SSD + Teachable Machine -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+  <!-- COCO-SSD object detection (native TF.js, no ml5 wrapper) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <!-- Teachable Machine Image — in-browser transfer learning -->
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
+  <!-- p5.js — camera capture + canvas rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="tracking.js"></script>
+  <script src="detection.js"></script>
+  <script src="classification.js"></script>
+  <script src="sketch.js"></script>
+</body>
+</html>

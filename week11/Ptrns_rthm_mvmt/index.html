@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drift Flow Field: Project Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <h1>Drift Flow Field</h1>
+      <p class="subtitle">Pattern, rhythm, and movement through curl noise and particle flow</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Live Sketch Embed -->
+    <section id="sketch">
+      <h2>Live Sketch</h2>
+      <div class="sketch-container">
+        <iframe src="sketch.html" title="Drift Flow Field - Interactive Visualization"></iframe>
+      </div>
+      <p class="sketch-caption">Interactive flow field visualization. Use the control panel (top-right) to adjust parameters, or press <code>H</code> to toggle it.</p>
+    </section>
+
+    <!-- Concept -->
+    <section id="concept">
+      <h2>Concept</h2>
+      <p>
+        This sketch explores pattern, rhythm, and movement through a particle-based flow field visualization inspired by the macOS Drift screensaver. Thousands of particles follow an evolving curl noise vector field, leaving fading trails that reveal the invisible structure of the flow. Drifting vortex centers create localized swirling patterns, producing complex, non-linear movement across the entire canvas.
+      </p>
+      <p>
+        The visualization uses HSB color mode with color mapped to the <em>curvature</em> of each particle's path, meaning particles flowing in straight lines appear as a different hue than those caught in tight spirals. This creates a natural color variation that highlights the underlying flow structure without any manual intervention. Five color palettes are available to explore different moods and compositions from the same underlying motion.
+      </p>
+    </section>
+
+    <!-- Process -->
+    <section id="process">
+      <h2>Process</h2>
+
+      <h3>Initial Flow Field with Velocity-Based Color</h3>
+      <p>
+        The project started with a basic Perlin noise flow field where particle color was determined by velocity heading (the direction of travel). This produced a working visualization, but the color distribution felt arbitrary and didn't meaningfully relate to the visual structure of the flow. Particles also showed visible gaps and fragmentation at higher speeds, where they would jump multiple pixels per frame.
+      </p>
+      <figure class="single">
+        <img src="media/1.png" alt="Early flow field with velocity-heading-based colors and visible trail gaps">
+        <figcaption>Early iteration: velocity-heading color mapping with visible fragmentation at high speeds.</figcaption>
+      </figure>
+
+      <h3>Trail Fragmentation and Sparse Flow</h3>
+      <p>
+        Increasing trail length revealed the gap problem more clearly. Longer trails showed disconnected segments where fast-moving particles skipped over pixels between frames. The flow patterns were emerging, but the visual continuity was broken.
+      </p>
+      <figure class="single">
+        <img src="media/2.png" alt="Longer trails showing fragmented particle paths">
+        <figcaption>Longer trails exposed the gap problem, with visible breaks in fast-moving particle paths.</figcaption>
+      </figure>
+
+      <h3>Debugging the Vector Field</h3>
+      <p>
+        To better understand the flow structure, I built a debug visualization that rendered the raw vector field as directional arrows. This confirmed the curl noise was producing smooth, divergence-free flow and helped identify how vortex centers interact with the base noise field. A basic text-based controls panel was added at this stage.
+      </p>
+      <figure class="single">
+        <img src="media/3.png" alt="Debug view showing flow field vectors as colored arrows">
+        <figcaption>Vector field debug view showing the underlying curl noise flow structure.</figcaption>
+      </figure>
+
+      <h3>Curvature-Based Color and Sub-Stepping</h3>
+      <p>
+        Two major changes transformed the sketch. First, color mapping was switched from velocity heading to <em>instantaneous curvature</em>, making the color reflect how sharply each particle is turning rather than which direction it faces. Second, sub-stepping was introduced to break fast particle movement into smaller increments, eliminating trail gaps entirely. These changes, combined with the interactive control panel, produced the final visualization.
+      </p>
+      <div class="image-grid">
+        <figure>
+          <img src="media/4.png" alt="Final visualization with Blue-Pink palette showing dense flowing trails">
+          <figcaption>Blue-Pink palette: 8000 particles with curvature-based color and continuous trails.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/5.png" alt="Red-Orange palette with organic swirling patterns">
+          <figcaption>Red-Orange palette: high evolution speed creates organic, tendril-like forms.</figcaption>
+        </figure>
+      </div>
+      <figure class="single">
+        <img src="media/6.png" alt="Violet palette with dense luminous trails">
+        <figcaption>Violet palette: 8000 particles with long trails and heavy line weight.</figcaption>
+      </figure>
+    </section>
+
+    <!-- Problem Write-Up -->
+    <section id="problem">
+      <h2>Problem: Ghosting and Trail Gaps at High Speeds</h2>
+      <p>
+        The most interesting problem I encountered was the afterimage and trail fragmentation that appeared when particles moved quickly. In a p5.js sketch running at 60fps, each particle's position updates once per frame. At high speeds, a particle might jump 4-6 pixels between frames, leaving visible gaps in its trail. Since trails are created by drawing lines between consecutive stored positions, these gaps manifested as broken, dotted paths rather than the smooth, continuous streams I was aiming for. The problem became more pronounced when cranking up the particle speed slider, effectively destroying the visual illusion of fluid flow.
+      </p>
+      <p>
+        The solution was to implement sub-stepping within each frame's position update. Instead of moving a particle its full velocity in one jump, I calculate how many intermediate steps are needed based on the current speed: <code>numSteps = max(1, ceil(speed / 2))</code>. The velocity is divided evenly across these steps, and each intermediate position is stored in the particle's trail history. This means a particle moving at speed 6 takes three sub-steps of 2 pixels each, with all three positions recorded for rendering. The result is that trails remain continuous and gap-free regardless of how fast particles move. This also required switching from storing p5.Vector objects to flat coordinate arrays (<code>hx[]</code>, <code>hy[]</code>) for performance, since sub-stepping multiplies the number of positions stored per frame, and the overhead of creating Vector objects at that scale caused noticeable lag at high particle counts.
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <p>&copy; 2025 — Drift Flow Field Project</p>
+    </footer>
+  </main>
+</body>
+</html>

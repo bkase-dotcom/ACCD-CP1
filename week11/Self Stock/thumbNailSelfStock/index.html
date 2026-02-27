@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self Stock Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <!-- Left: Logo -->
+    <div class="logo-container">
+      <h1>Self Stock</h1>
+    </div>
+
+    <!-- Right: Button selectors -->
+    <div class="selection-container">
+      <!-- Aisle Buttons -->
+      <div class="aisle-buttons">
+        <span class="label">Aisle:</span>
+        <div class="button-group" id="aisle-buttons">
+          <button>1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>4</button>
+        </div>
+      </div>
+
+      <!-- Section Buttons -->
+      <div class="section-buttons">
+        <span class="label">Section:</span>
+        <div class="button-group" id="section-buttons">
+          <button>A</button>
+          <button>B</button>
+          <button>C</button>
+          <button>D</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="detail-view">
+      <div class="product-image">
+        <img id="detail-image" alt="Select a product" />
+      </div>
+      <div class="product-details">
+        <div class="product-details-information">
+          <ul>
+            <li>
+              <span class="label">Name:</span>
+              <span class="value" id="detail-name">Select a product</span>
+            </li>
+            <li>
+              <span class="label">UPC:</span>
+              <span class="value" id="detail-upc">—</span>
+            </li>
+            <li>
+              <span class="label">In Stock:</span>
+              <span class="value" id="detail-stock">—</span>
+            </li>
+            <li>
+              <span class="label">Floor Location:</span>
+              <span class="value" id="detail-floor">—</span>
+            </li>
+            <li>
+              <span class="label">Backstock Location:</span>
+              <span class="value" id="detail-backstock">—</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="shelf-view">
+      <div class="shelf-row" id="shelf-row-1"></div>
+      <div class="shelf-row" id="shelf-row-2"></div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,599 @@
+/* sketch.css — Self Stock prototype styles
+   Adapted from the thumbNailSelfStock dashboard design language:
+   slate/teal/blue palette, clean type, product-card shelf grid.      */
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f172a;
+  color: #fff;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 2px solid #1e293b;
+}
+
+.logo-container h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.4px;
+  color: #22c5c2;
+}
+
+.tagline {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-bar {
+  font-size: 13px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+
+.btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+}
+.btn-secondary:hover { background: #334155; }
+
+.btn-accent {
+  background: #22c5c2;
+  color: #0f172a;
+}
+.btn-accent:hover:not(:disabled) { background: #14b8a6; }
+
+/* ================================================================
+   LAYOUT  — two-column main
+   ================================================================ */
+main {
+  display: flex;
+  height: calc(100vh - 64px);
+}
+
+.camera-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  position: relative;
+}
+
+.inventory-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #e2e8f0;
+  overflow-y: auto;
+}
+
+/* ================================================================
+   CAMERA FEED
+   ================================================================ */
+.camera-feed-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-feed {
+  position: relative;
+  width: 640px;
+  height: 480px;
+}
+
+.camera-feed canvas {
+  display: block;
+  border-radius: 6px;
+}
+
+/* white flash on capture */
+.capture-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.05s;
+  z-index: 5;
+}
+.capture-flash.active { opacity: 0.15; }
+
+/* ================================================================
+   CAPTURE UI  (training phase)
+   ================================================================ */
+.capture-ui {
+  background: #1e293b;
+  padding: 16px 24px;
+  color: #e2e8f0;
+}
+
+.capture-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.capture-progress-track {
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.capture-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #22c5c2;
+  border-radius: 3px;
+  transition: width 0.2s;
+}
+
+.capture-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.capture-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Record button — hold-to-capture */
+.btn-record {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: #334155;
+  color: #e2e8f0;
+  border: 2px solid #475569;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn-record:hover {
+  background: #3f4f66;
+  border-color: #64748b;
+}
+
+.btn-record.recording {
+  background: #991b1b;
+  border-color: #ef4444;
+  color: #fff;
+}
+
+.record-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+.btn-record.recording .record-dot {
+  animation: record-pulse 0.8s ease infinite;
+}
+
+@keyframes record-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+
+.capture-fps {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ================================================================
+   THUMBNAIL CAPTURE UI
+   ================================================================ */
+.thumbnail-ui {
+  background: #1e293b;
+  padding: 16px 24px;
+  color: #e2e8f0;
+}
+
+.thumb-header {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.thumb-prompt p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.thumb-prompt strong {
+  color: #e2e8f0;
+}
+
+.thumb-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.thumb-timer-row label {
+  color: #94a3b8;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.thumb-timer-row input[type="range"] {
+  flex: 1;
+  max-width: 200px;
+  accent-color: #22c5c2;
+  cursor: pointer;
+}
+
+.thumb-timer-value {
+  font-weight: 700;
+  color: #22c5c2;
+  min-width: 28px;
+}
+
+.thumb-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.thumb-countdown {
+  font-size: 48px;
+  font-weight: 800;
+  color: #22c5c2;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.thumb-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.thumb-preview img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #334155;
+  background: #f8fafc;
+}
+
+.thumb-preview-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ================================================================
+   SHELF VIEW
+   ================================================================ */
+.shelf-view {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.shelf-row {
+  background: #d4a574;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  min-height: 180px;
+  box-shadow: 0 10px 16px rgba(15, 23, 42, 0.15);
+  align-items: stretch;
+}
+
+/* when empty */
+.shelf-row:empty::after {
+  content: 'Products will appear here after training';
+  color: #78644e;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+  align-self: center;
+}
+
+/* ================================================================
+   PRODUCT CARDS
+   ================================================================ */
+.product-card {
+  background: #fff;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.product-card.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.product-card-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.product-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: #0f172a;
+}
+
+.product-card-stock {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.stock-pulse {
+  animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* ================================================================
+   DETAIL PANEL
+   ================================================================ */
+.detail-panel {
+  background: #fff;
+  margin: 0 24px 24px;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.detail-thumb {
+  width: 100px;
+  height: 75px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+
+.detail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.detail-info h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.detail-stock-line {
+  margin: 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+/* ================================================================
+   MODAL OVERLAY
+   ================================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 32px 36px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+}
+
+.modal h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.modal p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.modal .hint {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* input inside modal */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.input-group input {
+  padding: 10px 14px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+  border-color: #22c5c2;
+}
+
+/* training spinner */
+.training-progress {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #22c5c2;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================================================
+   UTILITY
+   ================================================================ */
+.hidden { display: none !important; }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 900px) {
+  main {
+    flex-direction: column;
+  }
+  .camera-feed {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+  }
+  .camera-feed canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+  }
+}
